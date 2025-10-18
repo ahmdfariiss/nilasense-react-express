@@ -18,9 +18,9 @@ export function Navbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: "Halaman Utama", page: "home", roles: ["guest", "user", "admin"] },
-    { name: "Produk", page: "products", roles: ["guest", "user", "admin"] },
-    { name: "Monitoring Kolam", page: "monitoring", roles: ["user", "admin"] },
+    { name: "Halaman Utama", page: "home", roles: ["guest", "buyer", "admin"] },
+    { name: "Produk", page: "products", roles: ["guest", "buyer", "admin"] },
+    { name: "Monitoring Kolam", page: "monitoring", roles: ["buyer", "admin"] },
     { name: "Admin Dashboard", page: "admin-dashboard", roles: ["admin"] },
   ];
 
