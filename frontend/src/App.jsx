@@ -7,15 +7,17 @@ import { ProductsPage } from "./pages/ProductsPage";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 
-// Ganti imports lama dengan imports baru dari folder /pages
 import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { WaterMonitoringPage } from "./pages/WaterMonitoringPage";
 import { UserMonitoringPage } from "./pages/UserMonitoringPage";
 
+// Import useAuth hook
+import { useAuth } from "./contexts/AuthContext";
+
 export default function App() {
+  const { user, loading, logout } = useAuth();
   const [currentPage, setCurrentPage] = useState("home");
-  const [user, setUser] = useState(null);
   const [selectedProductId, setSelectedProductId] = useState(1);
 
   const handleNavigate = (page, productId) => {
@@ -28,18 +30,7 @@ export default function App() {
   };
 
   const handleLogin = (email, password, role) => {
-    const userName = email.split("@")[0];
-    setUser({
-      name: userName.charAt(0).toUpperCase() + userName.slice(1),
-      email,
-      role,
-    });
-
-    toast.success(`Selamat datang, ${userName}!`, {
-      description: "Login berhasil",
-    });
-
-    // Navigate based on role
+    // Navigation setelah login berhasil
     if (role === "admin") {
       handleNavigate("admin-dashboard");
     } else {
@@ -48,27 +39,19 @@ export default function App() {
   };
 
   const handleRegister = (name, email, password) => {
-    setUser({
-      name,
-      email,
-      role: "user",
-    });
-
-    toast.success(`Selamat datang, ${name}!`, {
-      description: "Akun berhasil dibuat",
-    });
-
+    // Navigation setelah register berhasil
     handleNavigate("home");
   };
 
   const handleLogout = () => {
-    setUser(null);
+    logout();
     toast.info("Anda telah logout", {
       description: "Sampai jumpa lagi!",
     });
     handleNavigate("home");
   };
 
+  // Determine user role - gunakan data dari context
   const userRole = user?.role || "guest";
 
   // Redirect to login if trying to access protected pages
@@ -103,7 +86,7 @@ export default function App() {
       "user-management",
     ];
 
-    if (adminOnlyPages.includes(currentPage) && user?.role === "user") {
+    if (adminOnlyPages.includes(currentPage) && user?.role === "buyer") {
       toast.error("Akses ditolak", {
         description: "Halaman ini hanya untuk admin",
       });
@@ -194,6 +177,18 @@ export default function App() {
   };
 
   const showNavbar = !["login", "register"].includes(currentPage);
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Memuat...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
