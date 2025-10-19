@@ -1,5 +1,5 @@
 // backend/controllers/pondController.js
-const db = require("../db");
+const db = require("../config/db");
 
 // Fungsi untuk mendapatkan semua kolam (Admin Only)
 exports.getAllPonds = async (req, res) => {

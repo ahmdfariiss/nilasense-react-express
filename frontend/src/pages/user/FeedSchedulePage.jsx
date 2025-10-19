@@ -520,3 +520,5 @@ export function FeedSchedulePage({ onBack, showBreadcrumb = false, onNavigate })
     </div>
   );
 }
+
+export default FeedSchedulePage;

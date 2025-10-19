@@ -733,3 +733,5 @@ export function WaterQualityPage({ onBack, showBreadcrumb = false, onNavigate })
     </div>
   );
 }
+
+export default WaterQualityPage;

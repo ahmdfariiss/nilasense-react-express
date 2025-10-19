@@ -8,9 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { ProductCard } from "../fragments/ProductCard";
+import { ProductCard } from "../components/common/ProductCard";
 import { toast } from "sonner";
-import { getAllProducts } from "../services/productService";
+import productService from "../services/productService";
 
 export function ProductsPage({ onNavigate }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,7 +28,7 @@ export function ProductsPage({ onNavigate }) {
     setLoading(true);
     setError(null);
 
-    const result = await getAllProducts();
+    const result = await productService.getAllProducts();
 
     if (result.success) {
       // Transform backend data to match frontend format
@@ -182,3 +182,5 @@ export function ProductsPage({ onNavigate }) {
     </div>
   );
 }
+
+export default ProductsPage;

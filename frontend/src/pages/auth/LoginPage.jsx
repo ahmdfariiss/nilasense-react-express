@@ -203,3 +203,5 @@ export function LoginPage({ onLogin, onNavigate }) {
     </AuthLayout>
   );
 }
+
+export default LoginPage;

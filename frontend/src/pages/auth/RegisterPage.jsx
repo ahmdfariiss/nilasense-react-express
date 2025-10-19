@@ -236,3 +236,5 @@ export function RegisterPage({ onRegister, onNavigate }) {
     </AuthLayout>
   );
 }
+
+export default RegisterPage;
