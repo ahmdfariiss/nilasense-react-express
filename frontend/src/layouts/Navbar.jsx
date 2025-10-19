@@ -42,7 +42,7 @@ export function Navbar({
   const navLinks = [
     { name: "Halaman Utama", page: "home", roles: ["guest", "buyer", "admin"] },
     { name: "Produk", page: "products", roles: ["guest", "buyer", "admin"] },
-    { name: "Admin Dashboard", page: "admin-dashboard", roles: ["admin"] },
+    { name: "Admin Dashboard", page: "admin-overview", roles: ["admin"] },
   ];
 
   const monitoringLinks = [
@@ -55,7 +55,7 @@ export function Navbar({
   const visibleMonitoringLinks = monitoringLinks.filter((link) => link.roles.includes(userRole));
 
   // Check if current page is any monitoring related page
-  const isMonitoringActive = ["monitoring", "water-quality", "feed-schedule"].includes(currentPage);
+  const isMonitoringActive = ["monitoring", "water-quality", "feed-schedule", "water-monitoring", "feed-management", "admin-overview"].includes(currentPage);
 
   // Get current monitoring page name for display
   const getCurrentMonitoringPageName = () => {
@@ -66,6 +66,12 @@ export function Navbar({
         return "Kualitas Air";
       case "feed-schedule":
         return "Jadwal Pakan";
+      case "admin-overview":
+        return "Admin Overview";
+      case "water-monitoring":
+        return "Water Monitoring (Admin)";
+      case "feed-management":
+        return "Feed Management (Admin)";
       default:
         return "Monitoring Kolam";
     }

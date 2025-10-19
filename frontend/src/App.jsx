@@ -13,7 +13,11 @@ import { WaterMonitoringPage } from "./pages/WaterMonitoringPage";
 import { UserMonitoringPage } from "./pages/UserMonitoringPage";
 import { WaterQualityPage } from "./pages/WaterQualityPage";
 import { FeedSchedulePage } from "./pages/FeedSchedulePage";
-import { FeedManagementPage } from "./pages/FeedManagementPage";
+import { AdminFeedManagementPage } from "./pages/admin/AdminFeedManagementPage";
+import { AdminOverviewPage } from "./pages/admin/AdminOverviewPage";
+import { AdminProductManagementPage } from "./pages/admin/AdminProductManagementPage";
+import { AdminOrderManagementPage } from "./pages/admin/AdminOrderManagementPage";
+import { AdminUserManagementPage } from "./pages/admin/AdminUserManagementPage";
 
 // Import useAuth hook
 import { useAuth } from "./contexts/AuthContext";
@@ -35,7 +39,7 @@ export default function App() {
   const handleLogin = (email, password, role) => {
     // Navigation setelah login berhasil
     if (role === "admin") {
-      handleNavigate("admin-dashboard");
+      handleNavigate("admin-overview");
     } else {
       handleNavigate("home");
     }
@@ -65,6 +69,7 @@ export default function App() {
       "water-quality",
       "feed-schedule",
       "admin-dashboard",
+      "admin-overview",
       "water-monitoring",
       "feed-management",
       "product-management",
@@ -84,6 +89,7 @@ export default function App() {
     // Pages that are admin-only
     const adminOnlyPages = [
       "admin-dashboard",
+      "admin-overview",
       "water-monitoring",
       "feed-management",
       "product-management",
@@ -100,7 +106,12 @@ export default function App() {
 
     // Redirect old monitoring page to new structure
     if (currentPage === "monitoring" && user?.role === "admin") {
-      handleNavigate("admin-dashboard");
+      handleNavigate("admin-overview");
+    }
+    
+    // Redirect old admin-dashboard to new admin-overview
+    if (currentPage === "admin-dashboard" && user?.role === "admin") {
+      handleNavigate("admin-overview");
     }
   }, [currentPage, user]);
 
@@ -132,7 +143,12 @@ export default function App() {
         );
 
       case "admin-dashboard":
-        return <AdminDashboard onNavigate={handleNavigate} />;
+        // Legacy route - redirect to new admin overview
+        handleNavigate("admin-overview");
+        return null;
+        
+      case "admin-overview":
+        return <AdminOverviewPage />;
 
       case "water-monitoring":
         return <WaterMonitoringPage onNavigate={handleNavigate} />;
@@ -150,11 +166,17 @@ export default function App() {
         return <FeedSchedulePage showBreadcrumb={true} onNavigate={handleNavigate} />;
 
       case "feed-management":
-        return <FeedManagementPage onNavigate={handleNavigate} />;
+        return <AdminFeedManagementPage />;
 
       case "product-management":
+        return <AdminProductManagementPage />;
+
       case "orders":
+        return <AdminOrderManagementPage />;
+
       case "user-management":
+        return <AdminUserManagementPage />;
+
       case "profile":
         return (
           <div className="min-h-screen bg-background flex items-center justify-center p-8">
@@ -166,17 +188,12 @@ export default function App() {
                 Halaman Dalam Pengembangan
               </h2>
               <p className="text-muted-foreground mb-6">
-                Halaman{" "}
-                {currentPage
-                  .split("-")
-                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                  .join(" ")}{" "}
-                sedang dalam tahap pengembangan.
+                Halaman Profile sedang dalam tahap pengembangan.
               </p>
               <button
                 onClick={() =>
                   handleNavigate(
-                    userRole === "admin" ? "admin-dashboard" : "home"
+                    userRole === "admin" ? "admin-overview" : "home"
                   )
                 }
                 className="text-primary hover:underline"

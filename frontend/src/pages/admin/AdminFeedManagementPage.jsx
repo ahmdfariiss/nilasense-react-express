@@ -16,6 +16,7 @@ import {
   Play,
   X,
 } from "lucide-react";
+import AdminLayout from "@/components/layouts/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -233,7 +234,7 @@ const FeedScheduleForm = ({ isOpen, onClose, onSubmit, editData, ponds, loading 
   );
 };
 
-export function FeedManagementPage({ onNavigate }) {
+export function AdminFeedManagementPage() {
   // State management
   const [schedules, setSchedules] = useState([]);
   const [ponds, setPonds] = useState([]);
@@ -411,21 +412,19 @@ export function FeedManagementPage({ onNavigate }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary mr-2" />
-            <span>Memuat data...</span>
-          </div>
+      <AdminLayout title="Manajemen Jadwal Pakan" subtitle="Kelola jadwal pemberian pakan untuk semua kolam">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mr-2" />
+          <span>Memuat data...</span>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
+    <AdminLayout title="Manajemen Jadwal Pakan" subtitle="Kelola jadwal pemberian pakan untuk semua kolam">
+      <div className="space-y-6">
+        {/* Header Actions */}
         <div className="mb-8">
           <h1 className="text-foreground mb-2">Manajemen Jadwal Pakan</h1>
           <p className="text-muted-foreground">
@@ -629,6 +628,6 @@ export function FeedManagementPage({ onNavigate }) {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
