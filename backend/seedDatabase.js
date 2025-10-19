@@ -2,11 +2,14 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
+// Load environment variables
+require('dotenv').config();
+
 // Database configuration
 const pool = new Pool({
   user: process.env.DB_USER || 'postgres',
   host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'nilasense_db',
+  database: process.env.DB_DATABASE || 'nilasense_db', // Fixed: DB_DATABASE instead of DB_NAME
   password: process.env.DB_PASSWORD || 'password',
   port: process.env.DB_PORT || 5432,
 });

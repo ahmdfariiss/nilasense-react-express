@@ -2,7 +2,7 @@
 -- Jalankan script ini setelah menjalankan schema.sql
 
 -- Insert sample users (password: "password123" - sudah di-hash)
-INSERT INTO users (name, email, password, role) VALUES 
+INSERT INTO users (name, email, password_hash, role) VALUES 
 ('Admin Demo', 'admin@demo.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
 ('User Demo', 'user@demo.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'buyer')
 ON CONFLICT (email) DO NOTHING;
@@ -70,13 +70,13 @@ INSERT INTO feed_schedules (pond_id, feed_time, amount_kg, feed_type, status, is
 (3, '19:00:00', 3.0, 'Pelet Starter', 'pending', false, CURRENT_DATE)
 ON CONFLICT DO NOTHING;
 
--- Insert sample products
-INSERT INTO products (name, description, price, stock, category, image_url) VALUES 
-('Pelet Protein Tinggi 32%', 'Pakan ikan nila dengan kandungan protein tinggi untuk pertumbuhan optimal', 85000, 50, 'Pakan Ikan', '/images/pelet-protein-tinggi.jpg'),
-('Pelet Protein Sedang 28%', 'Pakan ikan nila dengan kandungan protein sedang untuk pemeliharaan', 75000, 75, 'Pakan Ikan', '/images/pelet-protein-sedang.jpg'),
-('Pelet Starter 35%', 'Pakan khusus untuk benih ikan nila', 95000, 30, 'Pakan Ikan', '/images/pelet-starter.jpg'),
-('Vitamin Ikan Premium', 'Suplemen vitamin untuk meningkatkan daya tahan tubuh ikan', 45000, 25, 'Suplemen', '/images/vitamin-ikan.jpg'),
-('Probiotik Kolam', 'Bakteri baik untuk menjaga kualitas air kolam', 65000, 40, 'Perawatan Air', '/images/probiotik-kolam.jpg')
+-- Insert sample products (user_id = 1 untuk admin)
+INSERT INTO products (user_id, name, description, price, stock_kg, category, image_url) VALUES 
+(1, 'Pelet Protein Tinggi 32%', 'Pakan ikan nila dengan kandungan protein tinggi untuk pertumbuhan optimal', 85000, 50.0, 'Pakan Ikan', '/images/pelet-protein-tinggi.jpg'),
+(1, 'Pelet Protein Sedang 28%', 'Pakan ikan nila dengan kandungan protein sedang untuk pemeliharaan', 75000, 75.0, 'Pakan Ikan', '/images/pelet-protein-sedang.jpg'),
+(1, 'Pelet Starter 35%', 'Pakan khusus untuk benih ikan nila', 95000, 30.0, 'Pakan Ikan', '/images/pelet-starter.jpg'),
+(1, 'Vitamin Ikan Premium', 'Suplemen vitamin untuk meningkatkan daya tahan tubuh ikan', 45000, 25.0, 'Suplemen', '/images/vitamin-ikan.jpg'),
+(1, 'Probiotik Kolam', 'Bakteri baik untuk menjaga kualitas air kolam', 65000, 40.0, 'Perawatan Air', '/images/probiotik-kolam.jpg')
 ON CONFLICT DO NOTHING;
 
 COMMIT;
