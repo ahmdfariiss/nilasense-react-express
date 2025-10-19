@@ -9,7 +9,8 @@ import {
   Users,
   Menu,
   X,
-  ChevronLeft
+  ChevronLeft,
+  Waves
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +25,12 @@ export function AdminLayout({ children, title, subtitle }) {
       label: "Dashboard Overview",
       path: "/admin/overview",
       key: "overview"
+    },
+    {
+      icon: <Waves className="w-5 h-5" />,
+      label: "Manajemen Kolam",
+      path: "/pond-management",
+      key: "pond-management"
     },
     {
       icon: <Droplet className="w-5 h-5" />,

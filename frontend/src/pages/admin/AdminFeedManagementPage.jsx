@@ -15,6 +15,13 @@ import {
   CheckCircle,
   Play,
   X,
+  Download,
+  Upload,
+  Check,
+  Square,
+  CheckSquare,
+  BarChart3,
+  TrendingUp
 } from "lucide-react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -247,6 +254,21 @@ export function AdminFeedManagementPage() {
   // Form states
   const [showForm, setShowForm] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
+  
+  // Bulk operations
+  const [selectedSchedules, setSelectedSchedules] = useState([]);
+  const [bulkAction, setBulkAction] = useState('');
+  const [bulkLoading, setBulkLoading] = useState(false);
+  
+  // Analytics
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [analytics, setAnalytics] = useState({
+    totalSchedules: 0,
+    completedSchedules: 0,
+    pendingSchedules: 0,
+    totalFeedAmount: 0,
+    completionRate: 0
+  });
   const [formLoading, setFormLoading] = useState(false);
   
   // Delete confirmation
@@ -297,12 +319,49 @@ export function AdminFeedManagementPage() {
           }
         }
         setSchedules(allSchedules);
+        
+        // Calculate analytics for all schedules
+        const totalSchedules = allSchedules.length;
+        const completedSchedules = allSchedules.filter(s => s.is_done).length;
+        const pendingSchedules = totalSchedules - completedSchedules;
+        const totalFeedAmount = allSchedules.reduce((sum, s) => sum + parseFloat(s.amount_kg || 0), 0);
+        const completionRate = totalSchedules > 0 ? (completedSchedules / totalSchedules) * 100 : 0;
+        
+        setAnalytics({
+          totalSchedules,
+          completedSchedules,
+          pendingSchedules,
+          totalFeedAmount,
+          completionRate
+        });
       } else {
         const result = await feedService.getAdminFeedSchedulesByDate(selectedPond, selectedDate);
         if (result.success) {
           setSchedules(result.data);
+          
+          // Calculate analytics for specific pond/date
+          const totalSchedules = result.data.length;
+          const completedSchedules = result.data.filter(s => s.is_done).length;
+          const pendingSchedules = totalSchedules - completedSchedules;
+          const totalFeedAmount = result.data.reduce((sum, s) => sum + parseFloat(s.amount_kg || 0), 0);
+          const completionRate = totalSchedules > 0 ? (completedSchedules / totalSchedules) * 100 : 0;
+          
+          setAnalytics({
+            totalSchedules,
+            completedSchedules,
+            pendingSchedules,
+            totalFeedAmount,
+            completionRate
+          });
         } else {
           setSchedules([]);
+          setAnalytics({
+            totalSchedules: 0,
+            completedSchedules: 0,
+            pendingSchedules: 0,
+            totalFeedAmount: 0,
+            completionRate: 0
+          });
           if (result.message !== 'Belum ada jadwal pakan') {
             toast.error(result.message);
           }
@@ -394,6 +453,94 @@ export function AdminFeedManagementPage() {
     }
   };
 
+  // Bulk operations handlers
+  const handleSelectAll = () => {
+    if (selectedSchedules.length === filteredSchedules.length) {
+      setSelectedSchedules([]);
+    } else {
+      setSelectedSchedules(filteredSchedules.map(s => s.id));
+    }
+  };
+
+  const handleSelectSchedule = (scheduleId) => {
+    setSelectedSchedules(prev => 
+      prev.includes(scheduleId) 
+        ? prev.filter(id => id !== scheduleId)
+        : [...prev, scheduleId]
+    );
+  };
+
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedSchedules.length === 0) return;
+
+    try {
+      setBulkLoading(true);
+      
+      if (bulkAction === 'complete') {
+        const promises = selectedSchedules.map(id => 
+          feedService.markFeedAsCompleted(id)
+        );
+        await Promise.all(promises);
+        toast.success(`${selectedSchedules.length} jadwal berhasil ditandai selesai`);
+      } else if (bulkAction === 'pending') {
+        const promises = selectedSchedules.map(id => 
+          feedService.markFeedAsPending(id)
+        );
+        await Promise.all(promises);
+        toast.success(`${selectedSchedules.length} jadwal berhasil direset`);
+      } else if (bulkAction === 'delete') {
+        const promises = selectedSchedules.map(id => 
+          feedService.deleteFeedSchedule(id)
+        );
+        await Promise.all(promises);
+        toast.success(`${selectedSchedules.length} jadwal berhasil dihapus`);
+      }
+      
+      setSelectedSchedules([]);
+      setBulkAction('');
+      fetchSchedules();
+    } catch (error) {
+      toast.error("Gagal melakukan operasi bulk");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      // Prepare CSV data
+      const csvHeaders = ['Tanggal', 'Kolam', 'Waktu', 'Jenis Pakan', 'Jumlah (kg)', 'Status'];
+      const csvData = filteredSchedules.map(schedule => [
+        schedule.feed_date,
+        schedule.pond_name,
+        schedule.feed_time,
+        schedule.feed_type,
+        schedule.amount_kg,
+        schedule.is_done ? 'Selesai' : 'Pending'
+      ]);
+
+      // Create CSV content
+      const csvContent = [csvHeaders, ...csvData]
+        .map(row => row.join(','))
+        .join('\n');
+
+      // Download CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `feed_schedules_${selectedDate}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Data berhasil diekspor");
+    } catch (error) {
+      toast.error("Gagal mengekspor data");
+    }
+  };
+
   // Filter schedules based on search term
   const filteredSchedules = schedules.filter(schedule => {
     const searchLower = searchTerm.toLowerCase();
@@ -424,12 +571,67 @@ export function AdminFeedManagementPage() {
   return (
     <AdminLayout title="Manajemen Jadwal Pakan" subtitle="Kelola jadwal pemberian pakan untuk semua kolam">
       <div className="space-y-6">
-        {/* Header Actions */}
-        <div className="mb-8">
-          <h1 className="text-foreground mb-2">Manajemen Jadwal Pakan</h1>
-          <p className="text-muted-foreground">
-            Kelola jadwal pemberian pakan untuk semua kolam
-          </p>
+        {/* Analytics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <UtensilsCrossed className="w-4 h-4 text-blue-600" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Jadwal</p>
+                  <p className="text-xl font-bold">{analytics.totalSchedules}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Selesai</p>
+                  <p className="text-xl font-bold">{analytics.completedSchedules}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-orange-600" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-xl font-bold">{analytics.pendingSchedules}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-purple-600" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Pakan</p>
+                  <p className="text-xl font-bold">{analytics.totalFeedAmount.toFixed(1)} kg</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-green-600" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Completion Rate</p>
+                  <p className="text-xl font-bold">{analytics.completionRate.toFixed(1)}%</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Controls */}
@@ -469,8 +671,19 @@ export function AdminFeedManagementPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
+              onClick={handleExportData}
+              disabled={filteredSchedules.length === 0}
+              size="sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export CSV
+            </Button>
+            
+            <Button
+              variant="outline"
               onClick={fetchSchedules}
               disabled={refreshing}
+              size="sm"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
@@ -483,6 +696,48 @@ export function AdminFeedManagementPage() {
           </div>
         </div>
 
+        {/* Bulk Actions */}
+        {selectedSchedules.length > 0 && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium">
+                  {selectedSchedules.length} jadwal dipilih
+                </span>
+                
+                <Select value={bulkAction} onValueChange={setBulkAction}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Pilih aksi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="complete">Tandai Selesai</SelectItem>
+                    <SelectItem value="pending">Reset ke Pending</SelectItem>
+                    <SelectItem value="delete">Hapus Jadwal</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button
+                  onClick={handleBulkAction}
+                  disabled={!bulkAction || bulkLoading}
+                  variant={bulkAction === 'delete' ? 'destructive' : 'default'}
+                  size="sm"
+                >
+                  {bulkLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Jalankan
+                </Button>
+                
+                <Button
+                  onClick={() => setSelectedSchedules([])}
+                  variant="outline"
+                  size="sm"
+                >
+                  Batal
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Schedules Table */}
         <Card>
           <CardHeader>
@@ -494,6 +749,20 @@ export function AdminFeedManagementPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSelectAll}
+                      className="p-0 h-auto"
+                    >
+                      {selectedSchedules.length === filteredSchedules.length && filteredSchedules.length > 0 ? (
+                        <CheckSquare className="w-4 h-4" />
+                      ) : (
+                        <Square className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </TableHead>
                   <TableHead>Kolam</TableHead>
                   <TableHead>Waktu</TableHead>
                   <TableHead>Sesi</TableHead>
@@ -507,6 +776,20 @@ export function AdminFeedManagementPage() {
                 {filteredSchedules.length > 0 ? (
                   filteredSchedules.map((schedule) => (
                     <TableRow key={schedule.id}>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSelectSchedule(schedule.id)}
+                          className="p-0 h-auto"
+                        >
+                          {selectedSchedules.includes(schedule.id) ? (
+                            <CheckSquare className="w-4 h-4" />
+                          ) : (
+                            <Square className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </TableCell>
                       <TableCell className="font-medium">
                         {schedule.pond_name || 'Unknown'}
                       </TableCell>

@@ -147,6 +147,115 @@ class PondService {
   saveSelectedPond(pondId) {
     localStorage.setItem('selectedPondId', pondId.toString());
   }
+
+  // Validasi data kolam
+  validatePondData(pondData) {
+    const errors = [];
+    
+    if (!pondData.name || pondData.name.trim().length === 0) {
+      errors.push('Nama kolam harus diisi');
+    }
+    
+    if (pondData.name && pondData.name.trim().length < 3) {
+      errors.push('Nama kolam minimal 3 karakter');
+    }
+    
+    if (pondData.name && pondData.name.trim().length > 100) {
+      errors.push('Nama kolam maksimal 100 karakter');
+    }
+    
+    if (pondData.location && pondData.location.trim().length > 255) {
+      errors.push('Lokasi maksimal 255 karakter');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  // Format data kolam untuk display
+  formatPondData(pond) {
+    if (!pond) return null;
+    
+    return {
+      ...pond,
+      created_at_formatted: pond.created_at ? new Date(pond.created_at).toLocaleDateString('id-ID') : '-',
+      location_display: pond.location || 'Tidak ada lokasi'
+    };
+  }
+
+  // Search dan filter kolam
+  searchPonds(ponds, searchTerm) {
+    if (!searchTerm || searchTerm.trim() === '') return ponds;
+    
+    const term = searchTerm.toLowerCase().trim();
+    return ponds.filter(pond => 
+      pond.name.toLowerCase().includes(term) ||
+      (pond.location && pond.location.toLowerCase().includes(term))
+    );
+  }
+
+  // Sort kolam berdasarkan kriteria
+  sortPonds(ponds, sortBy = 'created_at', sortOrder = 'desc') {
+    return [...ponds].sort((a, b) => {
+      let aValue = a[sortBy];
+      let bValue = b[sortBy];
+      
+      // Handle date sorting
+      if (sortBy === 'created_at') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+      
+      // Handle string sorting
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }
+
+  // Get pond statistics
+  async getPondStatistics(pondId) {
+    try {
+      const [waterQualityResponse, feedScheduleResponse] = await Promise.all([
+        api.get(`/monitoring/logs/${pondId}?limit=1`),
+        api.get(`/feeds/accessible/${pondId}`)
+      ]);
+
+      const latestWaterQuality = waterQualityResponse.data[0] || null;
+      const feedSchedules = feedScheduleResponse.data || [];
+      
+      const today = new Date().toISOString().split('T')[0];
+      const todaySchedules = feedSchedules.filter(schedule => 
+        schedule.feed_date === today
+      );
+      
+      return {
+        success: true,
+        data: {
+          latestWaterQuality,
+          totalFeedSchedules: feedSchedules.length,
+          todayFeedSchedules: todaySchedules.length,
+          completedToday: todaySchedules.filter(s => s.is_done).length
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching pond statistics:', error);
+      return {
+        success: false,
+        data: null,
+        message: 'Gagal mengambil statistik kolam'
+      };
+    }
+  }
 }
 
 export default new PondService();

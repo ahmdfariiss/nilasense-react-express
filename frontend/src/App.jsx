@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { AdminDashboard } from "./pages/AdminDashboard";
-import { WaterMonitoringPage } from "./pages/WaterMonitoringPage";
+import { AdminWaterMonitoringPage } from "./pages/admin/AdminWaterMonitoringPage";
 import { UserMonitoringPage } from "./pages/UserMonitoringPage";
 import { WaterQualityPage } from "./pages/WaterQualityPage";
 import { FeedSchedulePage } from "./pages/FeedSchedulePage";
@@ -18,6 +18,7 @@ import { AdminOverviewPage } from "./pages/admin/AdminOverviewPage";
 import { AdminProductManagementPage } from "./pages/admin/AdminProductManagementPage";
 import { AdminOrderManagementPage } from "./pages/admin/AdminOrderManagementPage";
 import { AdminUserManagementPage } from "./pages/admin/AdminUserManagementPage";
+import { AdminPondManagementPage } from "./pages/admin/AdminPondManagementPage";
 
 // Import useAuth hook
 import { useAuth } from "./contexts/AuthContext";
@@ -151,7 +152,7 @@ export default function App() {
         return <AdminOverviewPage />;
 
       case "water-monitoring":
-        return <WaterMonitoringPage onNavigate={handleNavigate} />;
+        return <AdminWaterMonitoringPage />;
 
       case "monitoring":
         // User monitoring dashboard (hub page)
@@ -167,6 +168,9 @@ export default function App() {
 
       case "feed-management":
         return <AdminFeedManagementPage />;
+
+      case "pond-management":
+        return <AdminPondManagementPage />;
 
       case "product-management":
         return <AdminProductManagementPage />;
