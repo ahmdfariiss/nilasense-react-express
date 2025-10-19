@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Load environment variables
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 
 // Database configuration
 const pool = new Pool({
@@ -19,7 +19,7 @@ async function updateFeedDatabase() {
     console.log('🔄 Updating feed schedules database schema and data...');
     
     // Read the update SQL file
-    const updateSQL = fs.readFileSync(path.join(__dirname, 'updateFeedSchema.sql'), 'utf8');
+    const updateSQL = fs.readFileSync(path.join(__dirname, '../migrations/002_feed_schema_update.sql'), 'utf8');
     
     // Execute the update SQL
     await pool.query(updateSQL);

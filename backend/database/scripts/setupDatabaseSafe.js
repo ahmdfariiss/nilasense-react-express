@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 
 // Load environment variables
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 
 // Database configuration dengan fallback values
 const dbConfig = {

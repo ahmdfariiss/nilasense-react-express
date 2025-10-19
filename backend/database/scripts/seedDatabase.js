@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Load environment variables
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 
 // Database configuration
 const pool = new Pool({
@@ -19,7 +19,7 @@ async function seedDatabase() {
     console.log('🌱 Starting database seeding...');
     
     // Read the seed SQL file
-    const seedSQL = fs.readFileSync(path.join(__dirname, 'seedData.sql'), 'utf8');
+    const seedSQL = fs.readFileSync(path.join(__dirname, '../seeds/001_initial_data.sql'), 'utf8');
     
     // Execute the seed SQL
     await pool.query(seedSQL);
