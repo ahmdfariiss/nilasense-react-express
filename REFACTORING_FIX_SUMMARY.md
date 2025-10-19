@@ -190,6 +190,19 @@ The repository now fully matches the structure specified in REFACTORING_SUMMARY.
 **Git Status:**
 - 15 files renamed/moved (backend)
 - 8 files renamed/moved (frontend)
-- 3 files modified (import path updates)
+- 5 files modified (import path updates + service import fixes)
 - 11 files deleted (unused/duplicate files)
 - All changes staged and ready to commit
+
+---
+
+## 🔧 Additional Fixes
+
+### Service Import Error Fix:
+**Problem:** ProductsPage.jsx and ProductDetailPage.jsx were using named imports for service methods, but services export as default class instances.
+
+**Fixed:**
+- ✅ ProductsPage.jsx: Changed `import { getAllProducts }` to `import productService` + `productService.getAllProducts()`
+- ✅ ProductDetailPage.jsx: Changed `import { getProductById }` to `import productService` + `productService.getProductById()`
+
+This matches the pattern used in all other pages (AdminProductManagementPage, AdminUserManagementPage, etc.)

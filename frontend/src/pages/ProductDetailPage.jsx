@@ -20,7 +20,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { toast } from "sonner";
-import { getProductById } from "../services/productService";
+import productService from "../services/productService";
 
 // Mock data for water quality trends (ini tetap mock karena backend belum punya relasi ke water_quality_logs)
 const waterQualityData = [
@@ -47,7 +47,7 @@ export function ProductDetailPage({ productId, onNavigate }) {
     setLoading(true);
     setError(null);
 
-    const result = await getProductById(productId);
+    const result = await productService.getProductById(productId);
 
     if (result.success) {
       // Transform backend data to match frontend format
