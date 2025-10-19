@@ -20,7 +20,23 @@ import { useAuth } from "./contexts/AuthContext";
 
 export default function App() {
   const { user, loading, logout } = useAuth();
-  const [currentPage, setCurrentPage] = useState("home");
+  
+  // Function to convert path to page name
+  const getPageFromPath = (pathname) => {
+    // Remove leading slash
+    const path = pathname.slice(1) || "home";
+    return path;
+  };
+
+  // Function to convert page name to path
+  const getPathFromPage = (page) => {
+    return page === "home" ? "/" : `/${page}`;
+  };
+
+  // Initialize currentPage from URL
+  const [currentPage, setCurrentPage] = useState(() => {
+    return getPageFromPath(window.location.pathname);
+  });
   const [selectedProductId, setSelectedProductId] = useState(1);
 
   const handleNavigate = (page, productId) => {
@@ -28,9 +44,40 @@ export default function App() {
     if (productId) {
       setSelectedProductId(productId);
     }
+    
+    // Update URL without reload
+    const path = getPathFromPage(page);
+    if (window.location.pathname !== path) {
+      window.history.pushState({ page, productId }, "", path);
+    }
+    
     // Scroll to top on navigation
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (event.state && event.state.page) {
+        setCurrentPage(event.state.page);
+        if (event.state.productId) {
+          setSelectedProductId(event.state.productId);
+        }
+      } else {
+        setCurrentPage(getPageFromPath(window.location.pathname));
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    
+    // Set initial state
+    window.history.replaceState({ page: currentPage }, "", window.location.pathname);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
 
   const handleLogin = (email, password, role) => {
     // Navigation setelah login berhasil
