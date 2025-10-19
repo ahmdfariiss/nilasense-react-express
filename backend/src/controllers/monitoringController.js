@@ -1,4 +1,4 @@
-const db = require("../db");
+const db = require("../config/db");
 
 // Fungsi untuk menambahkan log data sensor baru (Admin/Sistem)
 exports.addLog = async (req, res) => {

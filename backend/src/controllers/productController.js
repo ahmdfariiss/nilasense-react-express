@@ -1,5 +1,5 @@
 // backend/controllers/productController.js
-const db = require("../db");
+const db = require("../config/db");
 
 // Fungsi untuk mendapatkan semua produk (Publik)
 exports.getAllProducts = async (req, res) => {

@@ -9,7 +9,7 @@ import {
 } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
-import { ImageWithFallback } from "../elements/ImageWithFallback";
+import { ImageWithFallback } from "../components/common/ImageWithFallback";
 import {
   LineChart,
   Line,

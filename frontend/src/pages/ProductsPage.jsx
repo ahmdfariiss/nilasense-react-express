@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { ProductCard } from "../fragments/ProductCard";
+import { ProductCard } from "../components/common/ProductCard";
 import { toast } from "sonner";
 import { getAllProducts } from "../services/productService";
 

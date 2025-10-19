@@ -7,9 +7,8 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
-import { ImageWithFallback } from "../elements/ImageWithFallback";
-import { FeatureCard } from "../fragments/FeatureCard";
-import { Footer } from "../layouts/Footer";
+import { ImageWithFallback } from "../components/common/ImageWithFallback";
+import { FeatureCard } from "../components/common/FeatureCard";
 
 export function WelcomePage({ onNavigate, userRole }) {
   const features = [
@@ -276,8 +275,6 @@ export function WelcomePage({ onNavigate, userRole }) {
           )}
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 }
