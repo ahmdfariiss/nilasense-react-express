@@ -1,9 +1,10 @@
 import { createRoot } from "react-dom/client";
-import App from "./App.jsx";
+import { RouterProvider } from "react-router-dom";
 import "./index.css";
 
 // Import AuthProvider dari context
 import { AuthProvider } from "./contexts/AuthContext.jsx";
+import { router } from "./router/index.jsx";
 
 const container = document.getElementById("root");
 if (container) {
@@ -11,7 +12,7 @@ if (container) {
 
   root.render(
     <AuthProvider>
-      <App />
+      <RouterProvider router={router} />
     </AuthProvider>
   );
 }

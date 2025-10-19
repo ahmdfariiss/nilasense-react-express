@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, User, LogOut, ChevronDown, Droplet, UtensilsCrossed, BarChart3 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
@@ -7,14 +8,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
 
-export function Navbar({
-  userRole,
-  userName,
-  currentPage,
-  onNavigate,
-  onLogout,
-}) {
+export default function Navbar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const userRole = user?.role || "guest";
+  const userName = user?.name;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [monitoringDropdownOpen, setMonitoringDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
