@@ -5,6 +5,9 @@ import {
   Clock,
   RefreshCw,
   ArrowLeft,
+  Home,
+  ChevronRight,
+  Droplet,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,7 +45,7 @@ const feedScheduleData = [
   },
 ];
 
-export function FeedSchedulePage({ onBack }) {
+export function FeedSchedulePage({ onBack, showBreadcrumb = false, onNavigate }) {
   const getFeedStatusBadge = (status) => {
     switch (status) {
       case "Selesai":
@@ -59,6 +62,16 @@ export function FeedSchedulePage({ onBack }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
+          {/* Breadcrumb */}
+          {showBreadcrumb && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+              <Home className="w-4 h-4" />
+              <span>Monitoring Kolam</span>
+              <ChevronRight className="w-4 h-4" />
+              <span className="text-foreground">Jadwal Pakan</span>
+            </div>
+          )}
+
           <div className="flex items-center gap-4 mb-4">
             {onBack && (
               <Button variant="outline" size="sm" onClick={onBack}>
@@ -74,11 +87,35 @@ export function FeedSchedulePage({ onBack }) {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 mb-6">
-          <Button variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh Data
-          </Button>
+        <div className="flex justify-between items-center mb-6">
+          {/* Quick Navigation */}
+          {onNavigate && (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => onNavigate("monitoring")}
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => onNavigate("water-quality")}
+              >
+                <Droplet className="w-4 h-4 mr-2" />
+                Kualitas Air
+              </Button>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <Button variant="outline" size="sm">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh Data
+            </Button>
+          </div>
         </div>
 
         {/* Feed Info Cards */}

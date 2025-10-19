@@ -28,8 +28,8 @@ const quickStats = {
   }
 };
 
-export function UserMonitoringPage() {
-  const [currentView, setCurrentView] = useState("dashboard"); // dashboard, water, feed
+export function UserMonitoringPage({ initialView = "dashboard" }) {
+  const [currentView, setCurrentView] = useState(initialView); // dashboard, water, feed
 
   // Render different views based on currentView state
   if (currentView === "water") {

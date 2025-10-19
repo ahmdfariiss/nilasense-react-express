@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Menu, X, User, LogOut, ChevronDown } from "lucide-react";
+import { Menu, X, User, LogOut, ChevronDown, Droplet, UtensilsCrossed, BarChart3 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "../components/ui/dropdown-menu";
 
 export function Navbar({
@@ -16,15 +17,39 @@ export function Navbar({
   onLogout,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [monitoringMenuOpen, setMonitoringMenuOpen] = useState(false);
 
   const navLinks = [
     { name: "Halaman Utama", page: "home", roles: ["guest", "buyer", "admin"] },
     { name: "Produk", page: "products", roles: ["guest", "buyer", "admin"] },
-    { name: "Monitoring Kolam", page: "monitoring", roles: ["buyer", "admin"] },
     { name: "Admin Dashboard", page: "admin-dashboard", roles: ["admin"] },
   ];
 
+  const monitoringLinks = [
+    { name: "Dashboard Monitoring", page: "monitoring", icon: BarChart3, roles: ["buyer", "admin"] },
+    { name: "Kualitas Air", page: "water-quality", icon: Droplet, roles: ["buyer", "admin"] },
+    { name: "Jadwal Pakan", page: "feed-schedule", icon: UtensilsCrossed, roles: ["buyer", "admin"] },
+  ];
+
   const visibleLinks = navLinks.filter((link) => link.roles.includes(userRole));
+  const visibleMonitoringLinks = monitoringLinks.filter((link) => link.roles.includes(userRole));
+
+  // Check if current page is any monitoring related page
+  const isMonitoringActive = ["monitoring", "water-quality", "feed-schedule"].includes(currentPage);
+
+  // Get current monitoring page name for display
+  const getCurrentMonitoringPageName = () => {
+    switch (currentPage) {
+      case "monitoring":
+        return "Dashboard Monitoring";
+      case "water-quality":
+        return "Kualitas Air";
+      case "feed-schedule":
+        return "Jadwal Pakan";
+      default:
+        return "Monitoring Kolam";
+    }
+  };
 
   return (
     <nav className="bg-white border-b border-border sticky top-0 z-[100] shadow-sm">
@@ -65,6 +90,49 @@ export function Navbar({
                 {link.name}
               </button>
             ))}
+
+            {/* Monitoring Dropdown for Logged In Users */}
+            {userRole !== "guest" && visibleMonitoringLinks.length > 0 && (
+              <DropdownMenu open={monitoringMenuOpen} onOpenChange={setMonitoringMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={`flex items-center gap-2 transition-colors ${
+                      isMonitoringActive
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {isMonitoringActive ? getCurrentMonitoringPageName() : "Monitoring Kolam"}
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56 z-[101]">
+                  {visibleMonitoringLinks.map((link, index) => {
+                    const IconComponent = link.icon;
+                    const isActive = currentPage === link.page;
+                    return (
+                      <DropdownMenuItem
+                        key={link.page}
+                        onClick={() => {
+                          onNavigate(link.page);
+                          setMonitoringMenuOpen(false);
+                        }}
+                        className={`cursor-pointer ${
+                          isActive ? "bg-primary/10 text-primary font-medium" : ""
+                        }`}
+                      >
+                        <IconComponent className={`w-4 h-4 mr-2 ${isActive ? "text-primary" : ""}`} />
+                        {link.name}
+                        {isActive && (
+                          <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {/* Auth Buttons for Guest */}
             {userRole === "guest" && (
@@ -154,6 +222,35 @@ export function Navbar({
                   {link.name}
                 </button>
               ))}
+
+              {/* Mobile Monitoring Section */}
+              {userRole !== "guest" && visibleMonitoringLinks.length > 0 && (
+                <>
+                  <div className="px-4 py-2 text-sm font-medium text-muted-foreground">
+                    Monitoring Kolam
+                  </div>
+                  {visibleMonitoringLinks.map((link) => {
+                    const IconComponent = link.icon;
+                    return (
+                      <button
+                        key={link.page}
+                        onClick={() => {
+                          onNavigate(link.page);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`text-left px-6 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                          currentPage === link.page
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <IconComponent className="w-4 h-4" />
+                        {link.name}
+                      </button>
+                    );
+                  })}
+                </>
+              )}
 
               {userRole === "guest" ? (
                 <div className="flex flex-col gap-2 mt-2 px-4">

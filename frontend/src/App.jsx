@@ -11,6 +11,8 @@ import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { WaterMonitoringPage } from "./pages/WaterMonitoringPage";
 import { UserMonitoringPage } from "./pages/UserMonitoringPage";
+import { WaterQualityPage } from "./pages/WaterQualityPage";
+import { FeedSchedulePage } from "./pages/FeedSchedulePage";
 
 // Import useAuth hook
 import { useAuth } from "./contexts/AuthContext";
@@ -59,6 +61,8 @@ export default function App() {
     // Pages that require login (user or admin)
     const loginRequiredPages = [
       "monitoring",
+      "water-quality",
+      "feed-schedule",
       "admin-dashboard",
       "water-monitoring",
       "feed-management",
@@ -91,6 +95,11 @@ export default function App() {
         description: "Halaman ini hanya untuk admin",
       });
       handleNavigate("monitoring");
+    }
+
+    // Redirect old monitoring page to new structure
+    if (currentPage === "monitoring" && user?.role === "admin") {
+      handleNavigate("admin-dashboard");
     }
   }, [currentPage, user]);
 
@@ -128,11 +137,16 @@ export default function App() {
         return <WaterMonitoringPage onNavigate={handleNavigate} />;
 
       case "monitoring":
-        // Show different monitoring page based on role
-        if (userRole === "admin") {
-          return <WaterMonitoringPage onNavigate={handleNavigate} />;
-        }
+        // User monitoring dashboard (hub page)
         return <UserMonitoringPage />;
+
+      case "water-quality":
+        // Direct access to water quality monitoring
+        return <WaterQualityPage showBreadcrumb={true} onNavigate={handleNavigate} />;
+
+      case "feed-schedule":
+        // Direct access to feed schedule
+        return <FeedSchedulePage showBreadcrumb={true} onNavigate={handleNavigate} />;
 
       case "feed-management":
       case "product-management":
