@@ -55,6 +55,8 @@ import { toast } from "sonner";
 
 // Form component for creating/editing products
 const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
+  console.log('ProductForm render - isOpen:', isOpen);
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -507,7 +509,10 @@ export function ProductManagementPage({ onNavigate }) {
               Refresh
             </Button>
             
-            <Button onClick={() => setShowForm(true)}>
+            <Button onClick={() => {
+              console.log('Button Tambah Produk clicked!');
+              setShowForm(true);
+            }}>
               <Plus className="w-4 h-4 mr-2" />
               Tambah Produk
             </Button>
