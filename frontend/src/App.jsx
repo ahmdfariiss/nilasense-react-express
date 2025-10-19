@@ -14,6 +14,8 @@ import { UserMonitoringPage } from "./pages/UserMonitoringPage";
 import { WaterQualityPage } from "./pages/WaterQualityPage";
 import { FeedSchedulePage } from "./pages/FeedSchedulePage";
 import { FeedManagementPage } from "./pages/FeedManagementPage";
+import { ProductManagementPage } from "./pages/ProductManagementPage";
+import { UserManagementPage } from "./pages/UserManagementPage";
 
 // Import useAuth hook
 import { useAuth } from "./contexts/AuthContext";
@@ -200,8 +202,12 @@ export default function App() {
         return <FeedManagementPage onNavigate={handleNavigate} />;
 
       case "product-management":
-      case "orders":
+        return <ProductManagementPage onNavigate={handleNavigate} />;
+
       case "user-management":
+        return <UserManagementPage onNavigate={handleNavigate} />;
+
+      case "orders":
       case "profile":
         return (
           <div className="min-h-screen bg-background flex items-center justify-center p-8">

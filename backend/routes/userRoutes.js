@@ -10,6 +10,9 @@ router.get("/", protect, isAdmin, userController.getAllUsers);
 // GET /api/users/:id - Mendapatkan satu user berdasarkan ID
 router.get("/:id", protect, isAdmin, userController.getUserById);
 
+// POST /api/users - Membuat user baru (Admin only)
+router.post("/", protect, isAdmin, userController.createUser);
+
 // PUT /api/users/:id - Memperbarui data pengguna
 router.put("/:id", protect, isAdmin, userController.updateUser);
 
