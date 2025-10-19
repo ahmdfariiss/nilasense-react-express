@@ -37,11 +37,102 @@ async function setupDatabase() {
     
     console.log('📋 Setting up database schema and data...');
     
-    // Read and execute schema
-    console.log('   📄 Creating tables...');
-    const schemaSQL = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
-    await pool.query(schemaSQL);
-    console.log('   ✅ Tables created successfully');
+    // Create schema with error handling for existing objects
+    console.log('   📄 Creating/updating tables...');
+    
+    // Create enum type if not exists
+    await pool.query(`
+      DO $$ BEGIN
+        CREATE TYPE user_role AS ENUM ('admin', 'buyer');
+      EXCEPTION
+        WHEN duplicate_object THEN null;
+      END $$;
+    `);
+    
+    // Create tables if not exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role user_role NOT NULL DEFAULT 'buyer',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ponds (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        name VARCHAR(100) NOT NULL,
+        location VARCHAR(255),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS water_quality_logs (
+        id SERIAL PRIMARY KEY,
+        pond_id INTEGER REFERENCES ponds(id) ON DELETE CASCADE,
+        temperature DECIMAL(5, 2),
+        ph_level DECIMAL(4, 2),
+        dissolved_oxygen DECIMAL(5, 2),
+        turbidity DECIMAL(5, 2),
+        logged_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS feed_schedules (
+        id SERIAL PRIMARY KEY,
+        pond_id INTEGER REFERENCES ponds(id) ON DELETE CASCADE,
+        feed_time TIME NOT NULL,
+        amount_kg DECIMAL(5, 2) NOT NULL,
+        feed_type VARCHAR(100) DEFAULT 'Pelet Standar',
+        status VARCHAR(20) DEFAULT 'pending',
+        is_done BOOLEAN DEFAULT FALSE,
+        feed_date DATE DEFAULT CURRENT_DATE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        pond_id INTEGER REFERENCES ponds(id),
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        price INTEGER NOT NULL,
+        stock_kg DECIMAL(7, 2),
+        category VARCHAR(50),
+        image_url VARCHAR(255),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        buyer_id INTEGER REFERENCES users(id),
+        order_date TIMESTAMPTZ DEFAULT NOW(),
+        status VARCHAR(50) DEFAULT 'Menunggu Pembayaran',
+        total_amount INTEGER
+      );
+    `);
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS order_items (
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+        product_id INTEGER REFERENCES products(id),
+        quantity_kg DECIMAL(7, 2) NOT NULL,
+        price_per_kg INTEGER NOT NULL
+      );
+    `);
+    
+    console.log('   ✅ Tables created/updated successfully');
     
     // Create sample data with proper password hashing
     console.log('   👥 Creating sample users...');
