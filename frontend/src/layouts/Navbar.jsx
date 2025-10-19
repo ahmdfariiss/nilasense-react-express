@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X, User, LogOut, ChevronDown, Droplet, UtensilsCrossed, BarChart3 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
@@ -6,7 +6,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "../components/ui/dropdown-menu";
 
 export function Navbar({
@@ -17,7 +16,28 @@ export function Navbar({
   onLogout,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [monitoringMenuOpen, setMonitoringMenuOpen] = useState(false);
+  const [monitoringDropdownOpen, setMonitoringDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  
+  const monitoringRef = useRef(null);
+  const userRef = useRef(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (monitoringRef.current && !monitoringRef.current.contains(event.target)) {
+        setMonitoringDropdownOpen(false);
+      }
+      if (userRef.current && !userRef.current.contains(event.target)) {
+        setUserDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const navLinks = [
     { name: "Halaman Utama", page: "home", roles: ["guest", "buyer", "admin"] },
@@ -52,7 +72,7 @@ export function Navbar({
   };
 
   return (
-    <nav className="bg-white border-b border-border sticky top-0 z-[100] shadow-sm">
+    <nav className="bg-white border-b border-border sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -93,45 +113,47 @@ export function Navbar({
 
             {/* Monitoring Dropdown for Logged In Users */}
             {userRole !== "guest" && visibleMonitoringLinks.length > 0 && (
-              <DropdownMenu open={monitoringMenuOpen} onOpenChange={setMonitoringMenuOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={`flex items-center gap-2 transition-colors ${
-                      isMonitoringActive
-                        ? "text-primary bg-primary/10"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {isMonitoringActive ? getCurrentMonitoringPageName() : "Monitoring Kolam"}
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56 z-[101]">
-                  {visibleMonitoringLinks.map((link, index) => {
-                    const IconComponent = link.icon;
-                    const isActive = currentPage === link.page;
-                    return (
-                      <DropdownMenuItem
-                        key={link.page}
-                        onClick={() => {
-                          onNavigate(link.page);
-                          setMonitoringMenuOpen(false);
-                        }}
-                        className={`cursor-pointer ${
-                          isActive ? "bg-primary/10 text-primary font-medium" : ""
-                        }`}
-                      >
-                        <IconComponent className={`w-4 h-4 mr-2 ${isActive ? "text-primary" : ""}`} />
-                        {link.name}
-                        {isActive && (
-                          <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
-                        )}
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="relative" ref={monitoringRef}>
+                <button
+                  onClick={() => setMonitoringDropdownOpen(!monitoringDropdownOpen)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+                    isMonitoringActive
+                      ? "text-primary bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {isMonitoringActive ? getCurrentMonitoringPageName() : "Monitoring Kolam"}
+                  <ChevronDown className={`w-4 h-4 transition-transform ${monitoringDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {/* Dropdown Content */}
+                {monitoringDropdownOpen && (
+                  <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 shadow-lg rounded-md z-50 min-w-max">
+                    {visibleMonitoringLinks.map((link) => {
+                      const IconComponent = link.icon;
+                      const isActive = currentPage === link.page;
+                      return (
+                        <button
+                          key={link.page}
+                          onClick={() => {
+                            onNavigate(link.page);
+                            setMonitoringDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 transition-colors first:rounded-t-md last:rounded-b-md ${
+                            isActive ? "bg-primary/10 text-primary font-medium" : "text-gray-700"
+                          }`}
+                        >
+                          <IconComponent className={`w-4 h-4 ${isActive ? "text-primary" : ""}`} />
+                          {link.name}
+                          {isActive && (
+                            <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Auth Buttons for Guest */}
@@ -151,38 +173,46 @@ export function Navbar({
 
             {/* User Menu for Logged In Users */}
             {userRole !== "guest" && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center gap-2 hover:bg-primary/5"
-                  >
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-primary" />
-                    </div>
-                    <span className="text-foreground">
-                      {userName || "User"}
-                    </span>
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 z-[101]">
-                  <DropdownMenuItem
-                    onClick={() => onNavigate("profile")}
-                    className="cursor-pointer"
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    Profil
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={onLogout}
-                    className="cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="relative" ref={userRef}>
+                <button 
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-primary/5 transition-colors"
+                >
+                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="text-foreground">
+                    {userName || "User"}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {/* Dropdown Content */}
+                {userDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 shadow-lg rounded-md z-50 min-w-max">
+                    <button
+                      onClick={() => {
+                        onNavigate("profile");
+                        setUserDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 transition-colors text-gray-700 rounded-t-md"
+                    >
+                      <User className="w-4 h-4" />
+                      Profil
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (onLogout) onLogout();
+                        setUserDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 transition-colors text-gray-700 rounded-b-md"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -294,7 +324,7 @@ export function Navbar({
                   <Button
                     variant="outline"
                     onClick={() => {
-                      onLogout?.();
+                      if (onLogout) onLogout();
                       setMobileMenuOpen(false);
                     }}
                   >
