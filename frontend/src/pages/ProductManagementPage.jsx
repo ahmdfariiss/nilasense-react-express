@@ -222,8 +222,8 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
               value={formData.category}
               onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
             >
-              <SelectTrigger id="product-category">
-                <SelectValue />
+              <SelectTrigger id="product-category" aria-label="Pilih kategori produk">
+                <SelectValue placeholder="Pilih kategori" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
@@ -483,8 +483,8 @@ export function ProductManagementPage({ onNavigate }) {
             </div>
             
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
+              <SelectTrigger className="w-[180px]" aria-label="Filter kategori produk">
+                <SelectValue placeholder="Filter kategori" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Kategori</SelectItem>

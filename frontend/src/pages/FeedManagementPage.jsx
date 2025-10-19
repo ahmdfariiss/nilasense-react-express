@@ -140,7 +140,7 @@ const FeedScheduleForm = ({ isOpen, onClose, onSubmit, editData, ponds, loading 
                 value={formData.pond_id.toString()}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, pond_id: value }))}
               >
-                <SelectTrigger id="feed-pond">
+                <SelectTrigger id="feed-pond" aria-label="Pilih kolam">
                   <SelectValue placeholder="Pilih kolam" />
                 </SelectTrigger>
                 <SelectContent>
@@ -213,8 +213,8 @@ const FeedScheduleForm = ({ isOpen, onClose, onSubmit, editData, ponds, loading 
               value={formData.feed_type}
               onValueChange={(value) => setFormData(prev => ({ ...prev, feed_type: value }))}
             >
-              <SelectTrigger id="feed-type">
-                <SelectValue />
+              <SelectTrigger id="feed-type" aria-label="Pilih jenis pakan">
+                <SelectValue placeholder="Pilih jenis pakan" />
               </SelectTrigger>
               <SelectContent>
                 {feedTypes.map((type) => (
@@ -454,8 +454,8 @@ export function FeedManagementPage({ onNavigate }) {
             </div>
             
             <Select value={selectedPond} onValueChange={setSelectedPond}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
+              <SelectTrigger className="w-[180px]" aria-label="Filter kolam">
+                <SelectValue placeholder="Filter kolam" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Kolam</SelectItem>

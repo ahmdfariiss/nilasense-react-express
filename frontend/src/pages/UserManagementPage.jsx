@@ -184,8 +184,8 @@ const UserForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
               value={formData.role}
               onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
             >
-              <SelectTrigger id="user-role">
-                <SelectValue />
+              <SelectTrigger id="user-role" aria-label="Pilih role user">
+                <SelectValue placeholder="Pilih role" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="buyer">
@@ -420,8 +420,8 @@ export function UserManagementPage({ onNavigate }) {
             </div>
             
             <Select value={selectedRole} onValueChange={setSelectedRole}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
+              <SelectTrigger className="w-[180px]" aria-label="Filter role pengguna">
+                <SelectValue placeholder="Filter role" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Role</SelectItem>
