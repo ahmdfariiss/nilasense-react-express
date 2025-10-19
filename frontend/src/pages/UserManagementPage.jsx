@@ -124,11 +124,13 @@ const UserForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
           <div className="space-y-2">
-            <Label htmlFor="name">Nama Lengkap *</Label>
+            <Label htmlFor="user-name">Nama Lengkap *</Label>
             <Input
-              id="name"
+              id="user-name"
+              name="name"
+              autoComplete="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Masukkan nama lengkap"
@@ -140,10 +142,12 @@ const UserForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="user-email">Email *</Label>
             <Input
-              id="email"
+              id="user-email"
+              name="email"
               type="email"
+              autoComplete="email"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               placeholder="user@example.com"
@@ -155,12 +159,14 @@ const UserForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">
+            <Label htmlFor="user-password">
               Password {editData ? '(kosongkan jika tidak ingin mengubah)' : '*'}
             </Label>
             <Input
-              id="password"
+              id="user-password"
+              name="password"
               type="password"
+              autoComplete={editData ? "off" : "new-password"}
               value={formData.password}
               onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
               placeholder={editData ? 'Kosongkan jika tidak diubah' : 'Minimal 6 karakter'}
@@ -172,12 +178,13 @@ const UserForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Role *</Label>
+            <Label htmlFor="user-role">Role *</Label>
             <Select
+              name="role"
               value={formData.role}
               onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
             >
-              <SelectTrigger>
+              <SelectTrigger id="user-role">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

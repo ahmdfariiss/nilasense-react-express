@@ -145,11 +145,13 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
           <div className="space-y-2">
-            <Label htmlFor="name">Nama Produk *</Label>
+            <Label htmlFor="product-name">Nama Produk *</Label>
             <Input
-              id="name"
+              id="product-name"
+              name="product-name"
+              autoComplete="off"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Contoh: Nila Premium"
@@ -161,9 +163,11 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Deskripsi</Label>
+            <Label htmlFor="product-description">Deskripsi</Label>
             <Textarea
-              id="description"
+              id="product-description"
+              name="product-description"
+              autoComplete="off"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Deskripsi produk..."
@@ -173,12 +177,14 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">Harga (Rp/kg) *</Label>
+              <Label htmlFor="product-price">Harga (Rp/kg) *</Label>
               <Input
-                id="price"
+                id="product-price"
+                name="product-price"
                 type="number"
                 step="0.01"
                 min="0"
+                autoComplete="off"
                 value={formData.price}
                 onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
                 placeholder="50000"
@@ -190,12 +196,14 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="stock_kg">Stok (kg) *</Label>
+              <Label htmlFor="product-stock">Stok (kg) *</Label>
               <Input
-                id="stock_kg"
+                id="product-stock"
+                name="product-stock"
                 type="number"
                 step="0.1"
                 min="0"
+                autoComplete="off"
                 value={formData.stock_kg}
                 onChange={(e) => setFormData(prev => ({ ...prev, stock_kg: e.target.value }))}
                 placeholder="100"
@@ -208,12 +216,13 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Kategori</Label>
+            <Label htmlFor="product-category">Kategori</Label>
             <Select
+              name="product-category"
               value={formData.category}
               onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
             >
-              <SelectTrigger>
+              <SelectTrigger id="product-category">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -227,10 +236,12 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="image_url">URL Gambar</Label>
+            <Label htmlFor="product-image">URL Gambar</Label>
             <Input
-              id="image_url"
+              id="product-image"
+              name="product-image"
               type="url"
+              autoComplete="url"
               value={formData.image_url}
               onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
               placeholder="https://example.com/image.jpg"

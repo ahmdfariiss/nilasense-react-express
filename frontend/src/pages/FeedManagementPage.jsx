@@ -131,15 +131,16 @@ const FeedScheduleForm = ({ isOpen, onClose, onSubmit, editData, ponds, loading 
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="pond_id">Kolam *</Label>
+              <Label htmlFor="feed-pond">Kolam *</Label>
               <Select
+                name="pond_id"
                 value={formData.pond_id.toString()}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, pond_id: value }))}
               >
-                <SelectTrigger>
+                <SelectTrigger id="feed-pond">
                   <SelectValue placeholder="Pilih kolam" />
                 </SelectTrigger>
                 <SelectContent>
@@ -156,10 +157,12 @@ const FeedScheduleForm = ({ isOpen, onClose, onSubmit, editData, ponds, loading 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="feed_date">Tanggal</Label>
+              <Label htmlFor="feed-date">Tanggal</Label>
               <Input
-                id="feed_date"
+                id="feed-date"
+                name="feed_date"
                 type="date"
+                autoComplete="off"
                 value={formData.feed_date}
                 onChange={(e) => setFormData(prev => ({ ...prev, feed_date: e.target.value }))}
               />
@@ -168,10 +171,12 @@ const FeedScheduleForm = ({ isOpen, onClose, onSubmit, editData, ponds, loading 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="feed_time">Waktu Pemberian *</Label>
+              <Label htmlFor="feed-time">Waktu Pemberian *</Label>
               <Input
-                id="feed_time"
+                id="feed-time"
+                name="feed_time"
                 type="time"
+                autoComplete="off"
                 value={formData.feed_time}
                 onChange={(e) => setFormData(prev => ({ ...prev, feed_time: e.target.value }))}
                 className={errors.feed_time ? 'border-red-500' : ''}
@@ -182,13 +187,15 @@ const FeedScheduleForm = ({ isOpen, onClose, onSubmit, editData, ponds, loading 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="amount_kg">Jumlah (kg) *</Label>
+              <Label htmlFor="feed-amount">Jumlah (kg) *</Label>
               <Input
-                id="amount_kg"
+                id="feed-amount"
+                name="amount_kg"
                 type="number"
                 step="0.1"
                 min="0"
                 max="100"
+                autoComplete="off"
                 value={formData.amount_kg}
                 onChange={(e) => setFormData(prev => ({ ...prev, amount_kg: e.target.value }))}
                 className={errors.amount_kg ? 'border-red-500' : ''}
@@ -200,12 +207,13 @@ const FeedScheduleForm = ({ isOpen, onClose, onSubmit, editData, ponds, loading 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="feed_type">Jenis Pakan</Label>
+            <Label htmlFor="feed-type">Jenis Pakan</Label>
             <Select
+              name="feed_type"
               value={formData.feed_type}
               onValueChange={(value) => setFormData(prev => ({ ...prev, feed_type: value }))}
             >
-              <SelectTrigger>
+              <SelectTrigger id="feed-type">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
