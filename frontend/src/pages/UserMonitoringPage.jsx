@@ -16,6 +16,7 @@ import { WaterQualityPage } from "./WaterQualityPage";
 import { FeedSchedulePage } from "./FeedSchedulePage";
 import monitoringService from "../services/monitoringService";
 import pondService from "../services/pondService";
+import feedService from "../services/feedService";
 
 // Loading component untuk dashboard
 const DashboardLoading = () => (
@@ -82,8 +83,11 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
       setSelectedPond(defaultPond);
 
       if (defaultPond) {
-        // Get latest water quality data
-        const waterResult = await monitoringService.getLatestWaterQuality(defaultPond.id);
+        // Get latest water quality data and feed summary in parallel
+        const [waterResult, feedResult] = await Promise.all([
+          monitoringService.getLatestWaterQuality(defaultPond.id),
+          feedService.getTodayFeedSummary(defaultPond.id)
+        ]);
         
         let waterQualityStats = null;
         if (waterResult.success && waterResult.data) {
@@ -98,13 +102,27 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
           };
         }
 
-        // Mock feed schedule data (will be replaced with real API in next phase)
-        const feedScheduleStats = {
-          nextFeed: "18:00",
-          todayTotal: "15 kg",
-          status: "Menunggu",
-          lastUpdate: "2 jam yang lalu"
-        };
+        // Get feed schedule stats from real API
+        let feedScheduleStats = null;
+        if (feedResult.success && feedResult.data) {
+          const summary = feedResult.data;
+          feedScheduleStats = {
+            nextFeed: summary.nextFeedTime ? summary.nextFeedTime.substring(0, 5) : '--:--',
+            todayTotal: `${summary.totalAmount || 0} kg`,
+            status: summary.status || 'Belum ada jadwal',
+            lastUpdate: summary.nextFeedTime ? 
+              feedService.getRelativeTime(summary.nextFeedTime) : 
+              'Belum ada data'
+          };
+        } else {
+          // Fallback if no feed data
+          feedScheduleStats = {
+            nextFeed: '--:--',
+            todayTotal: '0 kg',
+            status: 'Belum ada jadwal',
+            lastUpdate: 'Belum ada data'
+          };
+        }
 
         setQuickStats({
           waterQuality: waterQualityStats,

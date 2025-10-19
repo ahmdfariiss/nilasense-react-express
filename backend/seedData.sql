@@ -58,16 +58,16 @@ BEGIN
 END $$;
 
 -- Insert sample feed schedules
-INSERT INTO feed_schedules (pond_id, feed_time, amount_kg, feed_type, status) VALUES 
-(1, '06:00:00', 5.0, 'Pelet Protein Tinggi', 'completed'),
-(1, '12:00:00', 5.0, 'Pelet Protein Tinggi', 'completed'),
-(1, '18:00:00', 5.0, 'Pelet Protein Tinggi', 'pending'),
-(2, '06:30:00', 4.0, 'Pelet Protein Sedang', 'completed'),
-(2, '12:30:00', 4.0, 'Pelet Protein Sedang', 'completed'),
-(2, '18:30:00', 4.0, 'Pelet Protein Sedang', 'pending'),
-(3, '07:00:00', 3.0, 'Pelet Starter', 'completed'),
-(3, '13:00:00', 3.0, 'Pelet Starter', 'completed'),
-(3, '19:00:00', 3.0, 'Pelet Starter', 'pending')
+INSERT INTO feed_schedules (pond_id, feed_time, amount_kg, feed_type, status, is_done, feed_date) VALUES 
+(1, '06:00:00', 5.0, 'Pelet Protein Tinggi', 'completed', true, CURRENT_DATE),
+(1, '12:00:00', 5.0, 'Pelet Protein Tinggi', 'completed', true, CURRENT_DATE),
+(1, '18:00:00', 5.0, 'Pelet Protein Tinggi', 'pending', false, CURRENT_DATE),
+(2, '06:30:00', 4.0, 'Pelet Protein Sedang', 'completed', true, CURRENT_DATE),
+(2, '12:30:00', 4.0, 'Pelet Protein Sedang', 'completed', true, CURRENT_DATE),
+(2, '18:30:00', 4.0, 'Pelet Protein Sedang', 'pending', false, CURRENT_DATE),
+(3, '07:00:00', 3.0, 'Pelet Starter', 'completed', true, CURRENT_DATE),
+(3, '13:00:00', 3.0, 'Pelet Starter', 'completed', true, CURRENT_DATE),
+(3, '19:00:00', 3.0, 'Pelet Starter', 'pending', false, CURRENT_DATE)
 ON CONFLICT DO NOTHING;
 
 -- Insert sample products

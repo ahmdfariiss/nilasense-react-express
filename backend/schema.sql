@@ -37,8 +37,11 @@ CREATE TABLE feed_schedules (
     pond_id INTEGER REFERENCES ponds(id) ON DELETE CASCADE,
     feed_time TIME NOT NULL, -- Hanya waktu, misal: '08:00:00'
     amount_kg DECIMAL(5, 2) NOT NULL, -- Jumlah pakan dalam kg
-    is_done BOOLEAN DEFAULT FALSE,
-    feed_date DATE DEFAULT CURRENT_DATE
+    feed_type VARCHAR(100) DEFAULT 'Pelet Standar', -- Jenis pakan
+    status VARCHAR(20) DEFAULT 'pending', -- pending, completed, cancelled
+    is_done BOOLEAN DEFAULT FALSE, -- Backward compatibility
+    feed_date DATE DEFAULT CURRENT_DATE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Tabel untuk produk yang dijual

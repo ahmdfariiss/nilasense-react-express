@@ -13,6 +13,7 @@ import { WaterMonitoringPage } from "./pages/WaterMonitoringPage";
 import { UserMonitoringPage } from "./pages/UserMonitoringPage";
 import { WaterQualityPage } from "./pages/WaterQualityPage";
 import { FeedSchedulePage } from "./pages/FeedSchedulePage";
+import { FeedManagementPage } from "./pages/FeedManagementPage";
 
 // Import useAuth hook
 import { useAuth } from "./contexts/AuthContext";
@@ -149,6 +150,8 @@ export default function App() {
         return <FeedSchedulePage showBreadcrumb={true} onNavigate={handleNavigate} />;
 
       case "feed-management":
+        return <FeedManagementPage onNavigate={handleNavigate} />;
+
       case "product-management":
       case "orders":
       case "user-management":
