@@ -19,6 +19,35 @@ exports.getAllPonds = async (req, res) => {
   }
 };
 
+// Fungsi untuk mendapatkan kolam yang bisa diakses user (Buyer & Admin)
+exports.getAccessiblePonds = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    let ponds;
+    
+    if (userRole === 'admin') {
+      // Admin hanya bisa lihat kolam miliknya sendiri
+      ponds = await db.query(
+        "SELECT * FROM ponds WHERE user_id = $1 ORDER BY created_at DESC",
+        [userId]
+      );
+    } else {
+      // Buyer bisa lihat semua kolam (untuk demo purposes)
+      // Dalam implementasi nyata, mungkin perlu relasi user-pond yang lebih kompleks
+      ponds = await db.query(
+        "SELECT * FROM ponds ORDER BY created_at DESC"
+      );
+    }
+
+    res.status(200).json(ponds.rows);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+  }
+};
+
 exports.createPond = async (req, res) => {
   const adminUserId = req.user.id; // Ambil ID admin dari token
   const { name, location } = req.body;

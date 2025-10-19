@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Calendar,
   Download,
@@ -8,6 +8,8 @@ import {
   Home,
   ChevronRight,
   UtensilsCrossed,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,93 +38,201 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import monitoringService from "../services/monitoringService";
+import pondService from "../services/pondService";
+import { toast } from "sonner";
 
-// Mock data for different time ranges
-const generateMockData = (days) => {
-  const data = [];
-  const now = new Date();
+// Empty state component
+const EmptyState = ({ message, onRefresh }) => (
+  <div className="flex flex-col items-center justify-center py-12 text-center">
+    <AlertCircle className="w-16 h-16 text-muted-foreground mb-4" />
+    <h3 className="text-lg font-semibold text-foreground mb-2">Belum Ada Data</h3>
+    <p className="text-muted-foreground mb-6 max-w-md">
+      {message || "Belum ada data monitoring untuk kolam ini. Data akan muncul setelah sensor mulai mengirim data."}
+    </p>
+    <Button onClick={onRefresh} variant="outline">
+      <RefreshCw className="w-4 h-4 mr-2" />
+      Coba Lagi
+    </Button>
+  </div>
+);
 
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-
-    data.push({
-      date: date.toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "short",
-      }),
-      suhu: 26 + Math.random() * 3,
-      ph: 7.0 + Math.random() * 0.5,
-      kekeruhan: 10 + Math.random() * 10,
-      oksigen: 6.0 + Math.random() * 1.5,
-    });
-  }
-
-  return data;
-};
-
-const waterHistoryData = [
-  {
-    time: "14:00:00",
-    date: "15 Okt 2025",
-    suhu: "28°C",
-    ph: "7.2",
-    kekeruhan: "15 NTU",
-    oksigen: "6.7 mg/L",
-    status: "Normal",
-  },
-  {
-    time: "13:00:00",
-    date: "15 Okt 2025",
-    suhu: "27°C",
-    ph: "7.1",
-    kekeruhan: "14 NTU",
-    oksigen: "6.8 mg/L",
-    status: "Normal",
-  },
-  {
-    time: "12:00:00",
-    date: "15 Okt 2025",
-    suhu: "28°C",
-    ph: "7.2",
-    kekeruhan: "16 NTU",
-    oksigen: "6.6 mg/L",
-    status: "Normal",
-  },
-  {
-    time: "11:00:00",
-    date: "15 Okt 2025",
-    suhu: "27°C",
-    ph: "7.0",
-    kekeruhan: "15 NTU",
-    oksigen: "6.9 mg/L",
-    status: "Normal",
-  },
-  {
-    time: "10:00:00",
-    date: "15 Okt 2025",
-    suhu: "26°C",
-    ph: "7.1",
-    kekeruhan: "13 NTU",
-    oksigen: "7.0 mg/L",
-    status: "Normal",
-  },
-];
+// Loading component
+const LoadingState = ({ message }) => (
+  <div className="flex flex-col items-center justify-center py-12 text-center">
+    <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+    <p className="text-muted-foreground">{message || "Memuat data..."}</p>
+  </div>
+);
 
 export function WaterQualityPage({ onBack, showBreadcrumb = false, onNavigate }) {
+  // State management
   const [timeRange, setTimeRange] = useState("7");
-  const [chartData, setChartData] = useState(generateMockData(7));
+  const [chartData, setChartData] = useState([]);
+  const [waterHistoryData, setWaterHistoryData] = useState([]);
+  const [currentStatus, setCurrentStatus] = useState(null);
+  const [ponds, setPonds] = useState([]);
+  const [selectedPond, setSelectedPond] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch ponds on component mount
+  useEffect(() => {
+    fetchPonds();
+  }, []);
+
+  // Fetch monitoring data when pond is selected
+  useEffect(() => {
+    if (selectedPond) {
+      fetchMonitoringData();
+    }
+  }, [selectedPond, timeRange]);
+
+  const fetchPonds = async () => {
+    try {
+      setLoading(true);
+      const result = await pondService.getAccessiblePonds();
+      
+      if (result.success) {
+        setPonds(result.data);
+        
+        // Set default pond
+        const defaultPond = pondService.getDefaultPond(result.data);
+        if (defaultPond) {
+          setSelectedPond(defaultPond);
+        } else if (result.data.length === 0) {
+          setError("Belum ada kolam yang tersedia. Silakan hubungi admin untuk menambahkan kolam.");
+        }
+      } else {
+        setError(result.message);
+        toast.error(result.message);
+      }
+    } catch (err) {
+      setError("Gagal memuat data kolam");
+      toast.error("Gagal memuat data kolam");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMonitoringData = async () => {
+    if (!selectedPond) return;
+    
+    try {
+      setRefreshing(true);
+      setError(null);
+
+      // Calculate date range based on timeRange
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - parseInt(timeRange));
+
+      // Fetch monitoring logs
+      const result = await monitoringService.getWaterQualityByDateRange(
+        selectedPond.id,
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
+
+      if (result.success) {
+        const logs = result.data;
+        
+        // Format data for charts
+        const formattedChartData = monitoringService.formatChartData(logs);
+        setChartData(formattedChartData);
+        
+        // Format data for history table (limit to 10 recent entries)
+        const historyData = logs.slice(0, 10).map(log => ({
+          time: new Date(log.logged_at).toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          }),
+          date: new Date(log.logged_at).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          }),
+          suhu: `${log.temperature}°C`,
+          ph: log.ph_level.toString(),
+          kekeruhan: `${log.turbidity} NTU`,
+          oksigen: `${log.dissolved_oxygen} mg/L`,
+          status: getOverallStatus(log)
+        }));
+        setWaterHistoryData(historyData);
+        
+        // Set current status from latest data
+        if (logs.length > 0) {
+          const latest = logs[0];
+          setCurrentStatus({
+            suhu: { 
+              value: `${latest.temperature}°C`, 
+              status: monitoringService.getWaterQualityStatus(latest.temperature, 'temperature'),
+              min: 25, 
+              max: 30 
+            },
+            ph: { 
+              value: latest.ph_level.toString(), 
+              status: monitoringService.getWaterQualityStatus(latest.ph_level, 'ph_level'),
+              min: 6.5, 
+              max: 8.5 
+            },
+            kekeruhan: { 
+              value: `${latest.turbidity} NTU`, 
+              status: monitoringService.getWaterQualityStatus(latest.turbidity, 'turbidity'),
+              max: 25 
+            },
+            oksigen: { 
+              value: `${latest.dissolved_oxygen} mg/L`, 
+              status: monitoringService.getWaterQualityStatus(latest.dissolved_oxygen, 'dissolved_oxygen'),
+              min: 5.0 
+            },
+          });
+        } else {
+          setCurrentStatus(null);
+        }
+      } else {
+        setError(result.message);
+        if (result.message !== 'Belum ada data monitoring') {
+          toast.error(result.message);
+        }
+      }
+    } catch (err) {
+      setError("Gagal memuat data monitoring");
+      toast.error("Gagal memuat data monitoring");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleTimeRangeChange = (value) => {
     setTimeRange(value);
-    setChartData(generateMockData(parseInt(value)));
   };
 
-  const currentStatus = {
-    suhu: { value: "28°C", status: "normal", min: 25, max: 30 },
-    ph: { value: "7.2", status: "normal", min: 6.5, max: 8.5 },
-    kekeruhan: { value: "15 NTU", status: "good", max: 25 },
-    oksigen: { value: "6.7 mg/L", status: "good", min: 5.0 },
+  const handlePondChange = (pondId) => {
+    const pond = ponds.find(p => p.id.toString() === pondId);
+    if (pond) {
+      setSelectedPond(pond);
+      pondService.saveSelectedPond(pondId);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchMonitoringData();
+  };
+
+  const getOverallStatus = (log) => {
+    const statuses = [
+      monitoringService.getWaterQualityStatus(log.temperature, 'temperature'),
+      monitoringService.getWaterQualityStatus(log.ph_level, 'ph_level'),
+      monitoringService.getWaterQualityStatus(log.dissolved_oxygen, 'dissolved_oxygen'),
+      monitoringService.getWaterQualityStatus(log.turbidity, 'turbidity')
+    ];
+
+    if (statuses.includes('warning')) return 'Perhatian';
+    if (statuses.includes('good')) return 'Sangat Baik';
+    return 'Normal';
   };
 
   const getStatusBadge = (status) => {
@@ -137,6 +247,28 @@ export function WaterQualityPage({ onBack, showBreadcrumb = false, onNavigate })
         return <Badge variant="outline">Unknown</Badge>;
     }
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <LoadingState message="Memuat data kolam..." />
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error && !selectedPond) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <EmptyState message={error} onRefresh={fetchPonds} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -161,10 +293,42 @@ export function WaterQualityPage({ onBack, showBreadcrumb = false, onNavigate })
               </Button>
             )}
           </div>
-          <h1 className="text-foreground mb-2">Monitoring Kualitas Air</h1>
-          <p className="text-muted-foreground">
-            Pantau kondisi kualitas air kolam Anda secara real-time
-          </p>
+          
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-foreground mb-2">Monitoring Kualitas Air</h1>
+              <p className="text-muted-foreground">
+                Pantau kondisi kualitas air kolam Anda secara real-time
+              </p>
+            </div>
+            
+            {/* Pond Selector */}
+            {ponds.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Kolam:</span>
+                <Select
+                  value={selectedPond?.id.toString()}
+                  onValueChange={handlePondChange}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Pilih kolam" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ponds.map((pond) => (
+                      <SelectItem key={pond.id} value={pond.id.toString()}>
+                        {pond.name}
+                        {pond.location && (
+                          <span className="text-muted-foreground ml-2">
+                            ({pond.location})
+                          </span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Actions */}
@@ -192,11 +356,16 @@ export function WaterQualityPage({ onBack, showBreadcrumb = false, onNavigate })
           )}
 
           <div className="flex gap-3">
-            <Button variant="outline" size="sm">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh Data
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Memuat...' : 'Refresh Data'}
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled={!chartData.length}>
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
@@ -204,7 +373,15 @@ export function WaterQualityPage({ onBack, showBreadcrumb = false, onNavigate })
         </div>
 
         {/* Current Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {!currentStatus ? (
+          <div className="mb-8">
+            <EmptyState 
+              message="Belum ada data monitoring untuk kolam ini. Data akan muncul setelah sensor mulai mengirim data."
+              onRefresh={handleRefresh}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="border-l-4 border-l-[#0891b2]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-3">
@@ -294,9 +471,11 @@ export function WaterQualityPage({ onBack, showBreadcrumb = false, onNavigate })
             </CardContent>
           </Card>
         </div>
+        )}
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {currentStatus && chartData.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Temperature Chart */}
           <Card>
             <CardHeader>
@@ -477,9 +656,18 @@ export function WaterQualityPage({ onBack, showBreadcrumb = false, onNavigate })
             </CardContent>
           </Card>
         </div>
+        ) : currentStatus && chartData.length === 0 ? (
+          <div className="mb-8">
+            <EmptyState 
+              message="Belum ada data historis untuk rentang waktu yang dipilih."
+              onRefresh={handleRefresh}
+            />
+          </div>
+        ) : null}
 
         {/* History Table */}
-        <Card>
+        {currentStatus && (
+          <Card>
           <CardHeader>
             <CardTitle>Riwayat Data Monitoring</CardTitle>
             <p
@@ -504,26 +692,43 @@ export function WaterQualityPage({ onBack, showBreadcrumb = false, onNavigate })
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {waterHistoryData.map((row, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{row.time}</TableCell>
-                      <TableCell>{row.date}</TableCell>
-                      <TableCell>{row.suhu}</TableCell>
-                      <TableCell>{row.ph}</TableCell>
-                      <TableCell>{row.kekeruhan}</TableCell>
-                      <TableCell>{row.oksigen}</TableCell>
-                      <TableCell>
-                        <Badge className="bg-[#10b981] text-white">
-                          {row.status}
-                        </Badge>
+                  {waterHistoryData.length > 0 ? (
+                    waterHistoryData.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{row.time}</TableCell>
+                        <TableCell>{row.date}</TableCell>
+                        <TableCell>{row.suhu}</TableCell>
+                        <TableCell>{row.ph}</TableCell>
+                        <TableCell>{row.kekeruhan}</TableCell>
+                        <TableCell>{row.oksigen}</TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={
+                              row.status === 'Sangat Baik' ? "bg-[#10b981] text-white" :
+                              row.status === 'Normal' ? "bg-[#0891b2] text-white" :
+                              "bg-[#f59e0b] text-white"
+                            }
+                          >
+                            {row.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        <div className="text-muted-foreground">
+                          Belum ada data monitoring
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );

@@ -7,6 +7,9 @@ const { protect, isAdmin } = require("../middleware/authMiddleware");
 // GET /api/ponds - Mendapatkan semua kolam (Admin Only)
 router.get("/", protect, isAdmin, pondController.getAllPonds);
 
+// GET /api/ponds/accessible - Mendapatkan kolam yang bisa diakses user (Buyer & Admin)
+router.get("/accessible", protect, pondController.getAccessiblePonds);
+
 // POST /api/ponds - Menambah kolam baru (Admin Only)
 router.post("/", protect, isAdmin, pondController.createPond);
 
