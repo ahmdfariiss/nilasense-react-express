@@ -914,3 +914,5 @@ export function AdminFeedManagementPage() {
     </AdminLayout>
   );
 }
+
+export default AdminFeedManagementPage;

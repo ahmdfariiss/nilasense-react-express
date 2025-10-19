@@ -440,3 +440,5 @@ export function ProductDetailPage({ productId, onNavigate }) {
     </div>
   );
 }
+
+export default ProductDetailPage;

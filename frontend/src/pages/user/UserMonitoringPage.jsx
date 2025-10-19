@@ -394,3 +394,5 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
     </div>
   );
 }
+
+export default UserMonitoringPage;

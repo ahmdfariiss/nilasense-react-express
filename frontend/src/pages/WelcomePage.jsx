@@ -278,3 +278,5 @@ export function WelcomePage({ onNavigate, userRole }) {
     </div>
   );
 }
+
+export default WelcomePage;

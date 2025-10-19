@@ -198,7 +198,7 @@ The repository now fully matches the structure specified in REFACTORING_SUMMARY.
 
 ## 🔧 Additional Fixes
 
-### Service Import Error Fix:
+### Fix #1: Service Import Error
 **Problem:** ProductsPage.jsx and ProductDetailPage.jsx were using named imports for service methods, but services export as default class instances.
 
 **Fixed:**
@@ -206,3 +206,41 @@ The repository now fully matches the structure specified in REFACTORING_SUMMARY.
 - ✅ ProductDetailPage.jsx: Changed `import { getProductById }` to `import productService` + `productService.getProductById()`
 
 This matches the pattern used in all other pages (AdminProductManagementPage, AdminUserManagementPage, etc.)
+
+---
+
+### Fix #2: Missing Default Exports
+**Problem:** Multiple page components were missing `export default` statements, causing "does not provide an export named 'default'" errors when imported by React Router.
+
+**Root Cause:** Files only had named exports (`export function ComponentName()`) but React Router's `createBrowserRouter` expects default exports.
+
+**Fixed - Added `export default` to 9 files:**
+
+**Auth Pages:**
+- ✅ `pages/auth/LoginPage.jsx` - Added `export default LoginPage`
+- ✅ `pages/auth/RegisterPage.jsx` - Added `export default RegisterPage`
+
+**User Pages:**
+- ✅ `pages/user/FeedSchedulePage.jsx` - Added `export default FeedSchedulePage`
+- ✅ `pages/user/UserMonitoringPage.jsx` - Added `export default UserMonitoringPage`
+- ✅ `pages/user/WaterQualityPage.jsx` - Added `export default WaterQualityPage`
+
+**Admin Pages:**
+- ✅ `pages/admin/AdminFeedManagementPage.jsx` - Added `export default AdminFeedManagementPage`
+
+**Public Pages:**
+- ✅ `pages/ProductDetailPage.jsx` - Added `export default ProductDetailPage`
+- ✅ `pages/ProductsPage.jsx` - Added `export default ProductsPage`
+- ✅ `pages/WelcomePage.jsx` - Added `export default WelcomePage`
+
+**Pattern Now Consistent:**
+All page components now follow the same pattern as other admin pages:
+```javascript
+export function ComponentName() {
+  // component code
+}
+
+export default ComponentName;
+```
+
+This allows both named imports (for testing) and default imports (for routing).

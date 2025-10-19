@@ -182,3 +182,5 @@ export function ProductsPage({ onNavigate }) {
     </div>
   );
 }
+
+export default ProductsPage;
