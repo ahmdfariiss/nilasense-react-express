@@ -1,0 +1,39 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js",
+    
+    "db:setup": "node database/scripts/setupDatabase.js",
+    "db:setup-safe": "node database/scripts/setupDatabaseSafe.js",
+    "db:seed": "node database/scripts/seedDatabase.js",
+    "db:update-feed": "node database/scripts/updateFeedDatabase.js",
+    "db:manager": "node database/manager.js",
+    "db:status": "node database/manager.js status",
+    "db:reset": "npm run db:drop && npm run db:create && npm run db:setup",
+    "db:create": "createdb nilasense_db",
+    "db:drop": "dropdb nilasense_db --if-exists",
+    
+    "seed": "npm run db:seed",
+    "setup": "npm run db:setup",
+    "setup-safe": "npm run db:setup-safe",
+    "update-feed": "npm run db:update-feed"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
