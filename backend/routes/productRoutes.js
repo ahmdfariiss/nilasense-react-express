@@ -2,22 +2,44 @@
 const express = require("express");
 const router = express.Router();
 const productController = require("../controllers/productController");
-const { protect, isAdmin } = require("../middleware/authMiddleware");
+const {
+  protect,
+  isAdmin,
+  isAdminOrPetambak,
+} = require("../middleware/authMiddleware");
 
-// GET /api/products - Mendapatkan semua produk
+// GET /api/products - Mendapatkan semua produk (dengan optional query ?pond_id=X)
 // Rute ini publik, jadi tidak perlu middleware 'protect' atau 'isAdmin'
 router.get("/", productController.getAllProducts);
+
+// GET /api/products/my/products - Mendapatkan produk milik admin/petambak yang sedang login
+// IMPORTANT: Harus di atas /:id karena lebih spesifik
+router.get(
+  "/my/products",
+  protect,
+  isAdminOrPetambak,
+  productController.getMyProducts
+);
+
+// GET /api/products/pond/:pond_id - Mendapatkan produk berdasarkan kolam tertentu
+// IMPORTANT: Harus di atas /:id karena lebih spesifik
+router.get("/pond/:pond_id", productController.getProductsByPond);
 
 // GET /api/products/:id - Mendapatkan satu produk berdasarkan ID
 router.get("/:id", productController.getProductById);
 
-// POST /api/products - Membuat produk baru (Admin Only)
-router.post("/", protect, isAdmin, productController.createProduct);
+// POST /api/products - Membuat produk baru (Admin & Petambak)
+router.post("/", protect, isAdminOrPetambak, productController.createProduct);
 
-// PUT /api/products/:id - Memperbarui produk (Admin Only)
-router.put("/:id", protect, isAdmin, productController.updateProduct);
+// PUT /api/products/:id - Memperbarui produk (Admin & Petambak)
+router.put("/:id", protect, isAdminOrPetambak, productController.updateProduct);
 
-// DELETE /api/products/:id - Menghapus produk (Admin Only)
-router.delete("/:id", protect, isAdmin, productController.deleteProduct);
+// DELETE /api/products/:id - Menghapus produk (Admin & Petambak)
+router.delete(
+  "/:id",
+  protect,
+  isAdminOrPetambak,
+  productController.deleteProduct
+);
 
 module.exports = router;

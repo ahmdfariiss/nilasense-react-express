@@ -1,20 +1,44 @@
 const db = require("../db");
 
-// Fungsi untuk mendapatkan jadwal pakan untuk satu kolam (Admin Only)
+// Fungsi untuk mendapatkan jadwal pakan untuk satu kolam (Admin & Petambak)
 exports.getFeedSchedulesByPondId = async (req, res) => {
   try {
     const { pondId } = req.params;
-    const adminUserId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    const userPondId = req.user.pond_id;
     const { date } = req.query; // Optional date filter
+
+    // Validate access based on role
+    if (userRole === "admin") {
+      // Admin: check if pond belongs to them
+      const pondCheck = await db.query(
+        "SELECT * FROM ponds WHERE id = $1 AND user_id = $2",
+        [pondId, userId]
+      );
+      if (pondCheck.rows.length === 0) {
+        return res.status(403).json({
+          message: "Kolam tidak ditemukan atau Anda tidak memiliki akses",
+        });
+      }
+    } else if (userRole === "petambak") {
+      // Petambak: check if pond matches their assigned pond
+      if (!userPondId || parseInt(pondId) !== userPondId) {
+        return res.status(403).json({
+          message:
+            "Anda hanya dapat mengakses kolam yang di-assign kepada Anda",
+        });
+      }
+    }
 
     let query = `SELECT fs.*, p.name as pond_name FROM feed_schedules fs
                  JOIN ponds p ON fs.pond_id = p.id
-                 WHERE fs.pond_id = $1 AND p.user_id = $2`;
-    let params = [pondId, adminUserId];
+                 WHERE fs.pond_id = $1`;
+    let params = [pondId];
 
     // Add date filter if provided
     if (date) {
-      query += ` AND fs.feed_date = $3`;
+      query += ` AND fs.feed_date = $2`;
       params.push(date);
     } else {
       // Default to today's schedules
@@ -32,23 +56,36 @@ exports.getFeedSchedulesByPondId = async (req, res) => {
   }
 };
 
-// Fungsi untuk mendapatkan jadwal pakan yang bisa diakses user (Buyer & Admin)
+// Fungsi untuk mendapatkan jadwal pakan yang bisa diakses user (Buyer, Admin & Petambak)
 exports.getAccessibleFeedSchedules = async (req, res) => {
   try {
     const { pondId } = req.params;
     const userId = req.user.id;
     const userRole = req.user.role;
+    const userPondId = req.user.pond_id;
     const { date } = req.query; // Optional date filter
 
     let query;
     let params;
 
-    if (userRole === 'admin') {
+    if (userRole === "admin") {
       // Admin hanya bisa lihat jadwal kolam miliknya
       query = `SELECT fs.*, p.name as pond_name FROM feed_schedules fs
                JOIN ponds p ON fs.pond_id = p.id
                WHERE fs.pond_id = $1 AND p.user_id = $2`;
       params = [pondId, userId];
+    } else if (userRole === "petambak") {
+      // Petambak hanya bisa lihat jadwal kolam yang di-assign
+      if (!userPondId || parseInt(pondId) !== userPondId) {
+        return res.status(403).json({
+          message:
+            "Anda hanya dapat mengakses kolam yang di-assign kepada Anda",
+        });
+      }
+      query = `SELECT fs.*, p.name as pond_name FROM feed_schedules fs
+               JOIN ponds p ON fs.pond_id = p.id
+               WHERE fs.pond_id = $1`;
+      params = [pondId];
     } else {
       // Buyer bisa lihat semua jadwal (untuk demo purposes)
       query = `SELECT fs.*, p.name as pond_name FROM feed_schedules fs
@@ -83,11 +120,22 @@ exports.getTodayFeedSummary = async (req, res) => {
     const { pondId } = req.params;
     const userId = req.user.id;
     const userRole = req.user.role;
+    const userPondId = req.user.pond_id;
+
+    // Validate access for petambak
+    if (userRole === "petambak") {
+      if (!userPondId || parseInt(pondId) !== userPondId) {
+        return res.status(403).json({
+          message:
+            "Anda hanya dapat mengakses kolam yang di-assign kepada Anda",
+        });
+      }
+    }
 
     let query;
     let params;
 
-    if (userRole === 'admin') {
+    if (userRole === "admin") {
       query = `SELECT 
                  COUNT(*) as total_schedules,
                  COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_schedules,
@@ -101,6 +149,7 @@ exports.getTodayFeedSummary = async (req, res) => {
                WHERE fs.pond_id = $1 AND p.user_id = $2 AND fs.feed_date = CURRENT_DATE`;
       params = [pondId, userId];
     } else {
+      // For petambak and buyer
       query = `SELECT 
                  COUNT(*) as total_schedules,
                  COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_schedules,
@@ -125,8 +174,8 @@ exports.getTodayFeedSummary = async (req, res) => {
       totalAmount: parseFloat(summary.total_amount) || 0,
       completedAmount: parseFloat(summary.completed_amount) || 0,
       nextFeedTime: summary.next_feed_time,
-      feedTypes: summary.feed_types || 'Belum ada jadwal',
-      status: summary.pending_schedules > 0 ? 'Menunggu' : 'Selesai'
+      feedTypes: summary.feed_types || "Belum ada jadwal",
+      status: summary.pending_schedules > 0 ? "Menunggu" : "Selesai",
     };
 
     res.status(200).json(response);
@@ -136,10 +185,12 @@ exports.getTodayFeedSummary = async (req, res) => {
   }
 };
 
-// Fungsi untuk membuat jadwal pakan baru (Admin Only)
+// Fungsi untuk membuat jadwal pakan baru (Admin & Petambak)
 exports.createFeedSchedule = async (req, res) => {
   const { pond_id, feed_time, amount_kg, feed_type, feed_date } = req.body;
-  const adminUserId = req.user.id;
+  const userId = req.user.id;
+  const userRole = req.user.role;
+  const userPondId = req.user.pond_id;
 
   // Validasi input
   if (!pond_id || !feed_time || !amount_kg) {
@@ -149,26 +200,36 @@ exports.createFeedSchedule = async (req, res) => {
   }
 
   try {
-    // Cek apakah kolam milik admin
-    const pondCheck = await db.query(
-      "SELECT id FROM ponds WHERE id = $1 AND user_id = $2",
-      [pond_id, adminUserId]
-    );
-
-    if (pondCheck.rows.length === 0) {
-      return res.status(404).json({ 
-        message: "Kolam tidak ditemukan atau Anda tidak memiliki akses" 
-      });
+    // Validate access based on role
+    if (userRole === "admin") {
+      // Admin: check if pond belongs to them
+      const pondCheck = await db.query(
+        "SELECT id FROM ponds WHERE id = $1 AND user_id = $2",
+        [pond_id, userId]
+      );
+      if (pondCheck.rows.length === 0) {
+        return res.status(404).json({
+          message: "Kolam tidak ditemukan atau Anda tidak memiliki akses",
+        });
+      }
+    } else if (userRole === "petambak") {
+      // Petambak: check if pond matches their assigned pond
+      if (!userPondId || parseInt(pond_id) !== userPondId) {
+        return res.status(403).json({
+          message:
+            "Anda hanya dapat mengelola jadwal pakan untuk kolam yang di-assign kepada Anda",
+        });
+      }
     }
 
     const newSchedule = await db.query(
       "INSERT INTO feed_schedules (pond_id, feed_time, amount_kg, feed_type, feed_date) VALUES ($1, $2, $3, $4, $5) RETURNING *",
       [
-        pond_id, 
-        feed_time, 
-        amount_kg, 
-        feed_type || 'Pelet Standar',
-        feed_date || new Date().toISOString().split('T')[0] // Format YYYY-MM-DD
+        pond_id,
+        feed_time,
+        amount_kg,
+        feed_type || "Pelet Standar",
+        feed_date || new Date().toISOString().split("T")[0], // Format YYYY-MM-DD
       ]
     );
 
@@ -187,32 +248,39 @@ exports.createFeedSchedule = async (req, res) => {
   }
 };
 
-// Fungsi untuk memperbarui jadwal pakan (misal: menandai selesai)
+// Fungsi untuk memperbarui jadwal pakan (Admin, Petambak & Buyer)
 exports.updateFeedSchedule = async (req, res) => {
   try {
     const { scheduleId } = req.params;
     const { feed_time, amount_kg, feed_type, status, is_done } = req.body;
     const userId = req.user.id;
     const userRole = req.user.role;
+    const userPondId = req.user.pond_id;
 
     // Cek jadwal dan akses
     let scheduleQuery;
-    if (userRole === 'admin') {
+    let queryParams;
+
+    if (userRole === "admin") {
       scheduleQuery = `SELECT fs.* FROM feed_schedules fs
                        JOIN ponds p ON fs.pond_id = p.id
                        WHERE fs.id = $1 AND p.user_id = $2`;
+      queryParams = [scheduleId, userId];
+    } else if (userRole === "petambak") {
+      scheduleQuery = `SELECT fs.* FROM feed_schedules fs
+                       WHERE fs.id = $1 AND fs.pond_id = $2`;
+      queryParams = [scheduleId, userPondId];
     } else {
       // Buyer hanya bisa update status (mark as completed)
       scheduleQuery = `SELECT fs.* FROM feed_schedules fs WHERE fs.id = $1`;
+      queryParams = [scheduleId];
     }
 
-    const scheduleExist = await db.query(scheduleQuery, 
-      userRole === 'admin' ? [scheduleId, userId] : [scheduleId]
-    );
+    const scheduleExist = await db.query(scheduleQuery, queryParams);
 
     if (scheduleExist.rows.length === 0) {
-      return res.status(404).json({ 
-        message: "Jadwal pakan tidak ditemukan atau Anda tidak memiliki akses" 
+      return res.status(404).json({
+        message: "Jadwal pakan tidak ditemukan atau Anda tidak memiliki akses",
       });
     }
 
@@ -222,24 +290,24 @@ exports.updateFeedSchedule = async (req, res) => {
     const newTime = feed_time || currentSchedule.feed_time;
     const newAmount = amount_kg || currentSchedule.amount_kg;
     const newFeedType = feed_type || currentSchedule.feed_type;
-    
+
     // Handle status update
     let newStatus = currentSchedule.status;
     let newIsDone = currentSchedule.is_done;
 
     if (status !== undefined) {
       newStatus = status;
-      newIsDone = status === 'completed';
+      newIsDone = status === "completed";
     } else if (is_done !== undefined) {
       newIsDone = is_done;
-      newStatus = is_done ? 'completed' : 'pending';
+      newStatus = is_done ? "completed" : "pending";
     }
 
     // For buyers, only allow status updates
-    if (userRole !== 'admin') {
+    if (userRole === "buyer") {
       if (feed_time || amount_kg || feed_type) {
-        return res.status(403).json({ 
-          message: "Anda hanya dapat mengubah status jadwal pakan" 
+        return res.status(403).json({
+          message: "Anda hanya dapat mengubah status jadwal pakan",
         });
       }
     }
@@ -259,30 +327,45 @@ exports.updateFeedSchedule = async (req, res) => {
   }
 };
 
-// Fungsi untuk menghapus jadwal pakan (Admin Only)
+// Fungsi untuk menghapus jadwal pakan (Admin & Petambak)
 exports.deleteFeedSchedule = async (req, res) => {
   try {
     const { scheduleId } = req.params;
-    const adminUserId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    const userPondId = req.user.pond_id;
 
-    // Cek jadwal dan akses admin
-    const scheduleExist = await db.query(
-      `SELECT fs.* FROM feed_schedules fs
-       JOIN ponds p ON fs.pond_id = p.id
-       WHERE fs.id = $1 AND p.user_id = $2`,
-      [scheduleId, adminUserId]
-    );
+    // Cek jadwal dan akses
+    let scheduleQuery;
+    let queryParams;
+
+    if (userRole === "admin") {
+      scheduleQuery = `SELECT fs.* FROM feed_schedules fs
+                       JOIN ponds p ON fs.pond_id = p.id
+                       WHERE fs.id = $1 AND p.user_id = $2`;
+      queryParams = [scheduleId, userId];
+    } else if (userRole === "petambak") {
+      scheduleQuery = `SELECT fs.* FROM feed_schedules fs
+                       WHERE fs.id = $1 AND fs.pond_id = $2`;
+      queryParams = [scheduleId, userPondId];
+    } else {
+      return res.status(403).json({
+        message: "Anda tidak memiliki akses untuk menghapus jadwal pakan",
+      });
+    }
+
+    const scheduleExist = await db.query(scheduleQuery, queryParams);
 
     if (scheduleExist.rows.length === 0) {
-      return res.status(404).json({ 
-        message: "Jadwal pakan tidak ditemukan atau Anda tidak memiliki akses" 
+      return res.status(404).json({
+        message: "Jadwal pakan tidak ditemukan atau Anda tidak memiliki akses",
       });
     }
 
     await db.query("DELETE FROM feed_schedules WHERE id = $1", [scheduleId]);
 
-    res.status(200).json({ 
-      message: "Jadwal pakan berhasil dihapus" 
+    res.status(200).json({
+      message: "Jadwal pakan berhasil dihapus",
     });
   } catch (error) {
     console.error(error.message);

@@ -42,10 +42,29 @@ exports.addLog = async (req, res) => {
   }
 };
 
-// Fungsi untuk mendapatkan semua log dari satu kolam (Buyer & Admin)
+// Fungsi untuk mendapatkan semua log dari satu kolam (Buyer, Admin & Petambak)
 exports.getLogsByPondId = async (req, res) => {
   try {
     const { pondId } = req.params; // Ambil ID kolam dari parameter URL
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+    const userPondId = req.user?.pond_id;
+
+    // Validate access for petambak
+    if (userRole === "petambak") {
+      if (!userPondId) {
+        return res.status(403).json({
+          message: "Petambak belum di-assign ke kolam",
+        });
+      }
+      // Petambak can only access their assigned pond
+      if (parseInt(pondId) !== userPondId) {
+        return res.status(403).json({
+          message:
+            "Anda hanya dapat mengakses data kolam yang di-assign kepada Anda",
+        });
+      }
+    }
 
     // Query untuk mengambil semua log dari kolam tertentu, diurutkan dari yang terbaru
     const logs = await db.query(

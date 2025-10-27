@@ -10,6 +10,8 @@ const productRoutes = require("./routes/productRoutes");
 const pondRoutes = require("./routes/pondRoutes");
 const monitoringRoutes = require("./routes/monitoringRoutes");
 const feedRoutes = require("./routes/feedRoutes");
+const cartRoutes = require("./routes/cartRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 const app = express();
 // Ganti port kembali ke 5001 jika perlu
@@ -26,6 +28,8 @@ app.use("/api/products", productRoutes);
 app.use("/api/ponds", pondRoutes);
 app.use("/api/monitoring", monitoringRoutes);
 app.use("/api/feeds", feedRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Endpoint (rute) pengujian sederhana
 app.get("/", (req, res) => {

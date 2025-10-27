@@ -73,6 +73,7 @@ exports.loginUser = async (req, res) => {
       id: user.id,
       name: user.name,
       role: user.role,
+      pond_id: user.pond_id || null, // Include pond assignment for petambak
     };
 
     // 5. Buat dan tandatangani token JWT

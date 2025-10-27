@@ -1,16 +1,32 @@
 // backend/controllers/pondController.js
 const db = require("../db");
 
-// Fungsi untuk mendapatkan semua kolam (Admin Only)
+// Fungsi untuk mendapatkan semua kolam (Admin & Petambak)
 exports.getAllPonds = async (req, res) => {
   try {
-    // Kita hanya akan mengambil kolam milik admin yang sedang login
-    const adminUserId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    const userPondId = req.user.pond_id;
 
-    const ponds = await db.query(
-      "SELECT * FROM ponds WHERE user_id = $1 ORDER BY created_at DESC",
-      [adminUserId]
-    );
+    let ponds;
+
+    if (userRole === "admin") {
+      // Admin bisa lihat semua kolam miliknya
+      ponds = await db.query(
+        "SELECT * FROM ponds WHERE user_id = $1 ORDER BY created_at DESC",
+        [userId]
+      );
+    } else if (userRole === "petambak") {
+      // Petambak hanya bisa lihat kolam yang di-assign
+      if (!userPondId) {
+        return res
+          .status(403)
+          .json({ message: "Petambak belum di-assign ke kolam" });
+      }
+      ponds = await db.query("SELECT * FROM ponds WHERE id = $1", [userPondId]);
+    } else {
+      return res.status(403).json({ message: "Akses ditolak" });
+    }
 
     res.status(200).json(ponds.rows);
   } catch (error) {
@@ -19,11 +35,12 @@ exports.getAllPonds = async (req, res) => {
   }
 };
 
-// Fungsi untuk mendapatkan kolam yang bisa diakses user (Buyer & Admin)
+// Fungsi untuk mendapatkan kolam yang bisa diakses user (Buyer, Admin & Petambak)
 exports.getAccessiblePonds = async (req, res) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
+    const userPondId = req.user.pond_id;
 
     let ponds;
 
@@ -33,6 +50,14 @@ exports.getAccessiblePonds = async (req, res) => {
         "SELECT * FROM ponds WHERE user_id = $1 ORDER BY created_at DESC",
         [userId]
       );
+    } else if (userRole === "petambak") {
+      // Petambak hanya bisa lihat kolam yang di-assign
+      if (!userPondId) {
+        return res.status(403).json({
+          message: "Petambak belum di-assign ke kolam",
+        });
+      }
+      ponds = await db.query("SELECT * FROM ponds WHERE id = $1", [userPondId]);
     } else {
       // Buyer bisa lihat semua kolam (untuk demo purposes)
       // Dalam implementasi nyata, mungkin perlu relasi user-pond yang lebih kompleks

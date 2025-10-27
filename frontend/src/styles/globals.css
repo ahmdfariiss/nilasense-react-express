@@ -199,3 +199,33 @@
 html {
   font-size: var(--font-size);
 }
+
+/* Custom Scrollbar Styles */
+@layer utilities {
+  /* For Webkit browsers (Chrome, Safari, Edge) */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-muted/30 rounded-lg;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-lg hover:bg-muted-foreground/50;
+  }
+
+  /* For Firefox */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted) / 0.3);
+  }
+
+  /* Smooth scrolling */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Dialog/Modal specific styles - REMOVED to prevent conflicts */

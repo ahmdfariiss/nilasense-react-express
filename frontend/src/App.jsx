@@ -1,28 +1,46 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "./layouts/Navbar";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { WelcomePage } from "./pages/WelcomePage";
-import { ProductsPage } from "./pages/ProductsPage";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 
-import { ProductDetailPage } from "./pages/ProductDetailPage";
-import { AdminDashboard } from "./pages/AdminDashboard";
-import { WaterMonitoringPage } from "./pages/WaterMonitoringPage";
-import { UserMonitoringPage } from "./pages/UserMonitoringPage";
-import { WaterQualityPage } from "./pages/WaterQualityPage";
-import { FeedSchedulePage } from "./pages/FeedSchedulePage";
-import { FeedManagementPage } from "./pages/FeedManagementPage";
-import { ProductManagementPage } from "./pages/ProductManagementPage";
-import { UserManagementPage } from "./pages/UserManagementPage";
-import { PondManagementPage } from "./pages/PondManagementPage";
+// Auth pages
+import { LoginPage } from "./pages/auth/LoginPage";
+import { RegisterPage } from "./pages/auth/RegisterPage";
 
-// Import useAuth hook
+// Public pages
+import { WelcomePage } from "./pages/public/WelcomePage";
+import { ProductsPage } from "./pages/public/ProductsPage";
+import { ProductDetailPage } from "./pages/public/ProductDetailPage";
+
+// Admin pages
+import { AdminDashboard } from "./pages/admin/AdminDashboard";
+import { WaterMonitoringPage } from "./pages/admin/WaterMonitoringPage";
+import { FeedManagementPage } from "./pages/admin/FeedManagementPage";
+import { ProductManagementPage } from "./pages/admin/ProductManagementPage";
+import { UserManagementPage } from "./pages/admin/UserManagementPage";
+import { PondManagementPage } from "./pages/admin/PondManagementPage";
+
+// Buyer pages (E-commerce only)
+import { CartPage } from "./pages/buyer/CartPage";
+import { CheckoutPage } from "./pages/buyer/CheckoutPage";
+import { OrderHistoryPage } from "./pages/buyer/OrderHistoryPage";
+import { OrderDetailPage } from "./pages/buyer/OrderDetailPage";
+import { OrderManagementPage } from "./pages/admin/OrderManagementPage";
+
+// Monitoring pages (for admin & petambak only)
+import { UserMonitoringPage } from "./pages/buyer/UserMonitoringPage";
+import { WaterQualityPage } from "./pages/buyer/WaterQualityPage";
+import { FeedSchedulePage } from "./pages/buyer/FeedSchedulePage";
+
+// Hooks & Contexts
 import { useAuth } from "./contexts/AuthContext";
+import { useDialogFix } from "./hooks/useDialogFix";
 
 export default function App() {
   const { user, loading, logout } = useAuth();
+
+  // Apply dialog visibility fix globally
+  useDialogFix();
 
   // Function to convert path to page name
   const getPageFromPath = (pathname) => {
@@ -41,17 +59,24 @@ export default function App() {
     return getPageFromPath(window.location.pathname);
   });
   const [selectedProductId, setSelectedProductId] = useState(1);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
-  const handleNavigate = (page, productId) => {
+  const handleNavigate = (page, id) => {
     setCurrentPage(page);
-    if (productId) {
-      setSelectedProductId(productId);
+
+    // Handle different types of IDs
+    if (id) {
+      if (page === "product-detail") {
+        setSelectedProductId(id);
+      } else if (page === "order-detail") {
+        setSelectedOrderId(id);
+      }
     }
 
     // Update URL without reload
     const path = getPathFromPage(page);
     if (window.location.pathname !== path) {
-      window.history.pushState({ page, productId }, "", path);
+      window.history.pushState({ page, id }, "", path);
     }
 
     // Scroll to top on navigation
@@ -63,8 +88,12 @@ export default function App() {
     const handlePopState = (event) => {
       if (event.state && event.state.page) {
         setCurrentPage(event.state.page);
-        if (event.state.productId) {
-          setSelectedProductId(event.state.productId);
+        if (event.state.id) {
+          if (event.state.page === "product-detail") {
+            setSelectedProductId(event.state.id);
+          } else if (event.state.page === "order-detail") {
+            setSelectedOrderId(event.state.id);
+          }
         }
       } else {
         setCurrentPage(getPageFromPath(window.location.pathname));
@@ -88,7 +117,7 @@ export default function App() {
 
   const handleLogin = (email, password, role) => {
     // Navigation setelah login berhasil
-    if (role === "admin") {
+    if (role === "admin" || role === "petambak") {
       handleNavigate("admin-dashboard");
     } else {
       handleNavigate("home");
@@ -113,8 +142,12 @@ export default function App() {
 
   // Redirect to login if trying to access protected pages
   useEffect(() => {
-    // Pages that require login (user or admin)
+    // Skip check if auth is still loading
+    if (loading) return;
+
+    // Pages that require login
     const loginRequiredPages = [
+      // Admin & Petambak pages
       "monitoring",
       "water-quality",
       "feed-schedule",
@@ -124,6 +157,13 @@ export default function App() {
       "product-management",
       "orders",
       "user-management",
+      "pond-management",
+      "order-management",
+      // Buyer pages (E-commerce only)
+      "cart",
+      "checkout",
+      "order-history",
+      "order-detail",
       "profile",
     ];
 
@@ -135,29 +175,38 @@ export default function App() {
       return;
     }
 
-    // Pages that are admin-only
-    const adminOnlyPages = [
+    // Pages accessible by both admin and petambak (including monitoring)
+    const adminAndPetambakPages = [
       "admin-dashboard",
       "water-monitoring",
       "feed-management",
       "product-management",
       "pond-management",
       "orders",
-      "user-management",
+      "order-management",
+      "monitoring",
+      "water-quality",
+      "feed-schedule",
     ];
 
-    if (adminOnlyPages.includes(currentPage) && user?.role === "buyer") {
-      toast.error("Akses ditolak", {
-        description: "Halaman ini hanya untuk admin",
-      });
-      handleNavigate("monitoring");
+    // Check if buyer/guest tries to access admin/petambak-only pages
+    if (adminAndPetambakPages.includes(currentPage)) {
+      if (user?.role !== "admin" && user?.role !== "petambak") {
+        toast.error("Akses ditolak", {
+          description: "Halaman ini hanya untuk admin dan petambak",
+        });
+        handleNavigate("home");
+      }
     }
 
-    // Redirect old monitoring page to new structure
-    if (currentPage === "monitoring" && user?.role === "admin") {
+    // User management is ADMIN ONLY (petambak cannot access)
+    if (currentPage === "user-management" && user?.role !== "admin") {
+      toast.error("Akses ditolak", {
+        description: "Halaman ini hanya untuk admin utama",
+      });
       handleNavigate("admin-dashboard");
     }
-  }, [currentPage, user]);
+  }, [currentPage, user, loading]);
 
   const renderPage = () => {
     switch (currentPage) {
@@ -192,22 +241,6 @@ export default function App() {
       case "water-monitoring":
         return <WaterMonitoringPage onNavigate={handleNavigate} />;
 
-      case "monitoring":
-        // User monitoring dashboard (hub page)
-        return <UserMonitoringPage />;
-
-      case "water-quality":
-        // Direct access to water quality monitoring
-        return (
-          <WaterQualityPage showBreadcrumb={true} onNavigate={handleNavigate} />
-        );
-
-      case "feed-schedule":
-        // Direct access to feed schedule
-        return (
-          <FeedSchedulePage showBreadcrumb={true} onNavigate={handleNavigate} />
-        );
-
       case "feed-management":
         return <FeedManagementPage onNavigate={handleNavigate} />;
 
@@ -217,10 +250,41 @@ export default function App() {
       case "user-management":
         return <UserManagementPage onNavigate={handleNavigate} />;
 
+      case "order-management":
+        return <OrderManagementPage onNavigate={handleNavigate} />;
+
       case "pond-management":
         return <PondManagementPage onNavigate={handleNavigate} />;
 
+      case "monitoring":
+        return <UserMonitoringPage onNavigate={handleNavigate} />;
+
+      case "water-quality":
+        return <WaterQualityPage onNavigate={handleNavigate} />;
+
+      case "feed-schedule":
+        return <FeedSchedulePage onNavigate={handleNavigate} />;
+
+      case "cart":
+        return <CartPage onNavigate={handleNavigate} />;
+
+      case "checkout":
+        return <CheckoutPage onNavigate={handleNavigate} />;
+
+      case "order-history":
+        return <OrderHistoryPage onNavigate={handleNavigate} />;
+
+      case "order-detail":
+        return (
+          <OrderDetailPage
+            orderId={selectedOrderId}
+            onNavigate={handleNavigate}
+          />
+        );
+
       case "orders":
+        return <OrderManagementPage onNavigate={handleNavigate} />;
+
       case "profile":
         return (
           <div className="min-h-screen bg-background flex items-center justify-center p-8">
@@ -242,13 +306,17 @@ export default function App() {
               <button
                 onClick={() =>
                   handleNavigate(
-                    userRole === "admin" ? "admin-dashboard" : "home"
+                    userRole === "admin" || userRole === "petambak"
+                      ? "admin-dashboard"
+                      : "home"
                   )
                 }
                 className="text-primary hover:underline"
               >
                 Kembali ke{" "}
-                {userRole === "admin" ? "Dashboard" : "Halaman Utama"}
+                {userRole === "admin" || userRole === "petambak"
+                  ? "Dashboard"
+                  : "Halaman Utama"}
               </button>
             </div>
           </div>

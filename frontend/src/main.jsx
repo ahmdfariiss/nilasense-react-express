@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
+import "./styles/dialog-fix.css";
 
 // Import AuthProvider dari context
 import { AuthProvider } from "./contexts/AuthContext.jsx";

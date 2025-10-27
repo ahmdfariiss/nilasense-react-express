@@ -21,6 +21,7 @@ const protect = (req, res, next) => {
         id: decoded.id,
         name: decoded.name,
         role: decoded.role,
+        pond_id: decoded.pond_id || null, // For petambak users
       };
 
       // 5. Lanjutkan ke fungsi controller selanjutnya
@@ -48,5 +49,42 @@ const isAdmin = (req, res, next) => {
   }
 };
 
+const isPetambak = (req, res, next) => {
+  // Middleware untuk petambak role
+  if (req.user && req.user.role === "petambak") {
+    // Pastikan petambak punya pond_id assignment
+    if (!req.user.pond_id) {
+      return res
+        .status(403)
+        .json({ message: "Akses ditolak. Petambak belum di-assign ke kolam." });
+    }
+    next();
+  } else {
+    res
+      .status(403)
+      .json({ message: "Akses ditolak. Rute ini hanya untuk petambak." });
+  }
+};
+
+const isAdminOrPetambak = (req, res, next) => {
+  // Middleware untuk admin atau petambak
+  // Digunakan untuk halaman yang bisa diakses kedua role
+  if (req.user && (req.user.role === "admin" || req.user.role === "petambak")) {
+    // Untuk petambak, pastikan punya pond assignment
+    if (req.user.role === "petambak" && !req.user.pond_id) {
+      return res
+        .status(403)
+        .json({ message: "Akses ditolak. Petambak belum di-assign ke kolam." });
+    }
+    next();
+  } else {
+    res
+      .status(403)
+      .json({
+        message: "Akses ditolak. Rute ini hanya untuk admin atau petambak.",
+      });
+  }
+};
+
 // Jangan lupa untuk mengekspor fungsi yang baru
-module.exports = { protect, isAdmin };
+module.exports = { protect, isAdmin, isPetambak, isAdminOrPetambak };
