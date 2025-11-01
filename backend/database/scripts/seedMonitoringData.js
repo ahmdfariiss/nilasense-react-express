@@ -3,7 +3,7 @@
  * Untuk test perbedaan hasil ML prediction
  */
 
-const db = require("../db");
+const db = require("../../src/config/database");
 require("dotenv").config();
 
 async function seedMonitoringData() {

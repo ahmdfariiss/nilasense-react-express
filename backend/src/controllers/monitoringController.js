@@ -1,4 +1,4 @@
-const db = require("../db");
+const db = require("../config/database");
 const mlService = require("../services/mlService");
 
 // Fungsi untuk menambahkan log data sensor baru (Admin/Sistem)

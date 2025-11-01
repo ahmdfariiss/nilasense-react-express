@@ -1,4 +1,4 @@
-const db = require("../db");
+const db = require("../config/database");
 
 // Fungsi untuk mendapatkan jadwal pakan untuk satu kolam (Admin & Petambak)
 exports.getFeedSchedulesByPondId = async (req, res) => {
