@@ -58,6 +58,7 @@ export function AdminDashboard({ onNavigate }) {
   const [ponds, setPonds] = useState([]);
   const [selectedPondId, setSelectedPondId] = useState(null);
   const [waterQualityData, setWaterQualityData] = useState(null);
+  const [mlPrediction, setMlPrediction] = useState(null); // ML prediction untuk dashboard
   const [waterQualityTrend, setWaterQualityTrend] = useState([]);
   const [feedSummary, setFeedSummary] = useState(null);
   const [productsStats, setProductsStats] = useState(null);
@@ -118,14 +119,8 @@ export function AdminDashboard({ onNavigate }) {
             .map((order) => ({
               id: order.order_number,
               customer: order.buyer_name || order.shipping_name,
-              product:
-                order.items && order.items.length > 0
-                  ? order.items[0].product_name
-                  : "-",
-              qty:
-                order.items && order.items.length > 0
-                  ? `${order.items[0].quantity} kg`
-                  : "-",
+              product: order.first_product_name || "-",
+              qty: order.total_quantity ? `${order.total_quantity} kg` : "-",
               status: getStatusLabel(order.status),
             }));
           setRecentOrders(transformedOrders);
@@ -160,16 +155,25 @@ export function AdminDashboard({ onNavigate }) {
     try {
       setRefreshing(true);
 
-      // Fetch latest water quality
+      // Fetch latest water quality dengan ML prediction
       const waterResult = await monitoringService.getLatestWaterQuality(pondId);
       if (waterResult.success && waterResult.data) {
         setWaterQualityData(waterResult.data);
+        // Set ML prediction jika tersedia
+        if (waterResult.mlPrediction) {
+          setMlPrediction(waterResult.mlPrediction);
+        } else {
+          setMlPrediction(null);
+        }
+      } else {
+        setWaterQualityData(null);
+        setMlPrediction(null);
       }
 
-      // Fetch water quality trend (7 days)
+      // Fetch water quality trend (7 days) - juga akan dapat ML prediction
       const endDate = new Date();
       const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 1); // Last 24 hours
+      startDate.setDate(startDate.getDate() - 7); // Last 7 days untuk lebih banyak data
 
       const trendResult = await monitoringService.getWaterQualityByDateRange(
         pondId,
@@ -183,6 +187,11 @@ export function AdminDashboard({ onNavigate }) {
         );
         // Take last 10 data points for cleaner chart
         setWaterQualityTrend(formattedTrend.slice(-10));
+
+        // Update ML prediction dari trend result jika tidak ada dari latest
+        if (!mlPrediction && trendResult.mlPrediction) {
+          setMlPrediction(trendResult.mlPrediction);
+        }
       }
 
       // Fetch today's feed summary
@@ -212,6 +221,12 @@ export function AdminDashboard({ onNavigate }) {
   const getWaterQualityStatus = () => {
     if (!waterQualityData) return "Tidak Ada Data";
 
+    // Prioritaskan hasil ML prediction jika tersedia
+    if (mlPrediction && mlPrediction.quality) {
+      return mlPrediction.quality;
+    }
+
+    // Fallback ke rule-based calculation jika ML tidak tersedia
     const temp = parseFloat(waterQualityData.temperature);
     const ph = parseFloat(waterQualityData.ph_level);
     const oxygen = parseFloat(waterQualityData.dissolved_oxygen);
@@ -234,8 +249,25 @@ export function AdminDashboard({ onNavigate }) {
     const statuses = [tempStatus, phStatus, oxygenStatus, turbidityStatus];
 
     if (statuses.includes("warning")) return "Perlu Perhatian";
-    if (statuses.every((s) => s === "good")) return "Sangat Baik";
-    return "Baik";
+    if (statuses.every((s) => s === "good")) return "Baik";
+    return "Normal";
+  };
+
+  const getMLQualityBadge = (quality) => {
+    if (!quality) return null;
+
+    const qualityLower = quality.toLowerCase();
+    if (qualityLower === "baik") {
+      return <Badge className="bg-[#10b981] text-white">Baik</Badge>;
+    } else if (qualityLower === "normal") {
+      return <Badge className="bg-[#0891b2] text-white">Normal</Badge>;
+    } else if (
+      qualityLower.includes("perhatian") ||
+      qualityLower.includes("buruk")
+    ) {
+      return <Badge className="bg-[#f59e0b] text-white">Perlu Perhatian</Badge>;
+    }
+    return <Badge variant="outline">{quality}</Badge>;
   };
 
   const getNextFeedTime = () => {
@@ -354,10 +386,16 @@ export function AdminDashboard({ onNavigate }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-background items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Memuat dashboard...</p>
+      <div className="flex min-h-screen bg-background">
+        <DashboardSidebar
+          onNavigate={onNavigate}
+          currentPage="admin-dashboard"
+        />
+        <div className="flex-1 lg:ml-64 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Memuat dashboard...</p>
+          </div>
         </div>
       </div>
     );
@@ -366,7 +404,7 @@ export function AdminDashboard({ onNavigate }) {
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar onNavigate={onNavigate} currentPage="admin-dashboard" />
-      <div className="flex-1">
+      <div className="flex-1 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
@@ -443,15 +481,30 @@ export function AdminDashboard({ onNavigate }) {
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-muted-foreground">
                         Status Kualitas Air
+                        {mlPrediction && (
+                          <span className="ml-2 text-xs">(ML Prediction)</span>
+                        )}
                       </p>
                       <Droplet className="w-5 h-5 text-[#0891b2]" />
                     </div>
-                    <p
-                      className="text-foreground"
-                      style={{ fontSize: "1.75rem", fontWeight: 700 }}
-                    >
-                      {getWaterQualityStatus()}
-                    </p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p
+                        className="text-foreground"
+                        style={{ fontSize: "1.75rem", fontWeight: 700 }}
+                      >
+                        {getWaterQualityStatus()}
+                      </p>
+                      {mlPrediction && getMLQualityBadge(mlPrediction.quality)}
+                    </div>
+                    {mlPrediction && mlPrediction.confidence && (
+                      <p
+                        className="text-muted-foreground mb-2"
+                        style={{ fontSize: "0.875rem" }}
+                      >
+                        Confidence: {(mlPrediction.confidence * 100).toFixed(2)}
+                        %
+                      </p>
+                    )}
                     <div className="flex items-center gap-1 mt-2">
                       {waterQualityData ? (
                         <>
@@ -461,6 +514,7 @@ export function AdminDashboard({ onNavigate }) {
                             style={{ fontSize: "0.875rem" }}
                           >
                             Data terbaru tersedia
+                            {mlPrediction ? " • ML Analysis" : " • Rule-based"}
                           </span>
                         </>
                       ) : (
@@ -662,65 +716,155 @@ export function AdminDashboard({ onNavigate }) {
                   </CardContent>
                 </Card>
 
-                {/* AI Prediction Table */}
+                {/* ML Prediction & AI Analysis Card */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-primary" />
-                      Analisis Tren Kualitas Air
+                      {mlPrediction
+                        ? "Analisis ML Kualitas Air"
+                        : "Analisis Tren Kualitas Air"}
                     </CardTitle>
                     <p
                       className="text-muted-foreground"
                       style={{ fontSize: "0.875rem" }}
                     >
-                      Berdasarkan data monitoring terkini
+                      {mlPrediction
+                        ? "Hasil prediksi Machine Learning berdasarkan data terbaru"
+                        : "Berdasarkan data monitoring terkini"}
                     </p>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {aiPredictions.map((prediction, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                        >
-                          <div className="flex-1">
-                            <p className="text-foreground mb-1">
-                              {prediction.parameter}
-                            </p>
-                            <p
-                              className="text-muted-foreground"
-                              style={{ fontSize: "0.875rem" }}
-                            >
-                              {prediction.prediction}
-                            </p>
+                    {mlPrediction ? (
+                      <>
+                        {/* ML Prediction Summary */}
+                        <div className="space-y-4 mb-4">
+                          {/* Quality & Confidence */}
+                          <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
+                            <div>
+                              <p className="text-sm text-muted-foreground">
+                                Kualitas Air
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className="text-lg font-bold">
+                                  {mlPrediction.quality}
+                                </p>
+                                {getMLQualityBadge(mlPrediction.quality)}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-muted-foreground">
+                                Confidence
+                              </p>
+                              <p className="text-lg font-bold text-primary">
+                                {(mlPrediction.confidence * 100).toFixed(1)}%
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {prediction.trend === "increasing" && (
-                              <TrendingUp className="w-4 h-4 text-[#f59e0b]" />
+
+                          {/* Issues Summary */}
+                          {mlPrediction.issues &&
+                            mlPrediction.issues.length > 0 && (
+                              <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                <p className="text-sm font-semibold mb-2 text-amber-900 dark:text-amber-200">
+                                  Masalah Terdeteksi:
+                                </p>
+                                <ul className="space-y-1">
+                                  {mlPrediction.issues
+                                    .slice(0, 3)
+                                    .map((issue, idx) => (
+                                      <li
+                                        key={idx}
+                                        className="text-sm text-amber-800 dark:text-amber-300"
+                                      >
+                                        • {issue}
+                                      </li>
+                                    ))}
+                                  {mlPrediction.issues.length > 3 && (
+                                    <li className="text-xs text-amber-600 dark:text-amber-400">
+                                      +{mlPrediction.issues.length - 3} masalah
+                                      lainnya
+                                    </li>
+                                  )}
+                                </ul>
+                              </div>
                             )}
-                            {prediction.trend === "decreasing" && (
-                              <TrendingDown className="w-4 h-4 text-[#ef4444]" />
+
+                          {/* Top Recommendations */}
+                          {mlPrediction.recommendations &&
+                            mlPrediction.recommendations.length > 0 && (
+                              <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <p className="text-sm font-semibold mb-2 text-blue-900 dark:text-blue-200">
+                                  Rekomendasi Utama:
+                                </p>
+                                <ol className="space-y-1">
+                                  {mlPrediction.recommendations
+                                    .slice(0, 2)
+                                    .map((rec, idx) => (
+                                      <li
+                                        key={idx}
+                                        className="text-sm text-blue-800 dark:text-blue-300"
+                                      >
+                                        {idx + 1}. {rec}
+                                      </li>
+                                    ))}
+                                  {mlPrediction.recommendations.length > 2 && (
+                                    <li className="text-xs text-blue-600 dark:text-blue-400">
+                                      +{mlPrediction.recommendations.length - 2}{" "}
+                                      rekomendasi lainnya
+                                    </li>
+                                  )}
+                                </ol>
+                              </div>
                             )}
-                            {prediction.trend === "stable" && (
-                              <div className="w-4 h-0.5 bg-[#10b981]" />
-                            )}
-                            <Badge
-                              className={getStatusColor(prediction.status)}
-                            >
-                              {prediction.status === "good"
-                                ? "Baik"
-                                : "Perhatian"}
-                            </Badge>
-                          </div>
                         </div>
-                      ))}
-                    </div>
+                      </>
+                    ) : (
+                      <div className="space-y-3">
+                        {aiPredictions.map((prediction, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                          >
+                            <div className="flex-1">
+                              <p className="text-foreground mb-1">
+                                {prediction.parameter}
+                              </p>
+                              <p
+                                className="text-muted-foreground"
+                                style={{ fontSize: "0.875rem" }}
+                              >
+                                {prediction.prediction}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {prediction.trend === "increasing" && (
+                                <TrendingUp className="w-4 h-4 text-[#f59e0b]" />
+                              )}
+                              {prediction.trend === "decreasing" && (
+                                <TrendingDown className="w-4 h-4 text-[#ef4444]" />
+                              )}
+                              {prediction.trend === "stable" && (
+                                <div className="w-4 h-0.5 bg-[#10b981]" />
+                              )}
+                              <Badge
+                                className={getStatusColor(prediction.status)}
+                              >
+                                {prediction.status === "good"
+                                  ? "Baik"
+                                  : "Perhatian"}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <Button
                       variant="outline"
                       className="w-full mt-4"
                       onClick={() => onNavigate("water-monitoring")}
                     >
-                      Lihat Detail Monitoring
+                      Lihat Detail Monitoring & Analisis Lengkap
                       <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
                   </CardContent>

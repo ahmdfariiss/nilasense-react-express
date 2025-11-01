@@ -1,4 +1,5 @@
 const db = require("../db");
+const mlService = require("../services/mlService");
 
 // Fungsi untuk menambahkan log data sensor baru (Admin/Sistem)
 exports.addLog = async (req, res) => {
@@ -20,6 +21,25 @@ exports.addLog = async (req, res) => {
   }
 
   try {
+    // Get ML prediction
+    let mlPrediction = null;
+    try {
+      const prediction = await mlService.predictWaterQuality({
+        ph: ph_level,
+        temperature,
+        turbidity,
+        dissolved_oxygen,
+        pond_id,
+      });
+
+      if (prediction.success) {
+        mlPrediction = prediction.data;
+      }
+    } catch (mlError) {
+      console.error("ML Prediction error:", mlError.message);
+      // Continue without ML prediction if it fails
+    }
+
     const newLog = await db.query(
       "INSERT INTO water_quality_logs (pond_id, temperature, ph_level, dissolved_oxygen, turbidity) VALUES ($1, $2, $3, $4, $5) RETURNING *",
       [pond_id, temperature, ph_level, dissolved_oxygen, turbidity]
@@ -28,6 +48,7 @@ exports.addLog = async (req, res) => {
     res.status(201).json({
       message: "Data log sensor berhasil disimpan",
       log: newLog.rows[0],
+      ml_prediction: mlPrediction, // Include ML prediction in response
     });
   } catch (error) {
     console.error(error.message);
@@ -66,21 +87,55 @@ exports.getLogsByPondId = async (req, res) => {
       }
     }
 
-    // Query untuk mengambil semua log dari kolam tertentu, diurutkan dari yang terbaru
-    const logs = await db.query(
-      "SELECT * FROM water_quality_logs WHERE pond_id = $1 ORDER BY logged_at DESC",
-      [pondId]
-    );
+    // Get limit from query parameter (for latest data)
+    const limit = req.query.limit ? parseInt(req.query.limit) : null;
+
+    // Query untuk mengambil log dari kolam tertentu, diurutkan dari yang terbaru
+    let query =
+      "SELECT * FROM water_quality_logs WHERE pond_id = $1 ORDER BY logged_at DESC";
+    let queryParams = [pondId];
+
+    if (limit && limit > 0) {
+      query += " LIMIT $2";
+      queryParams.push(limit);
+    }
+
+    const logs = await db.query(query, queryParams);
+
+    // Get ML prediction for the latest log if available
+    let mlPrediction = null;
+    if (logs.rows.length > 0) {
+      const latestLog = logs.rows[0];
+      try {
+        const prediction = await mlService.predictWaterQuality({
+          ph: latestLog.ph_level,
+          temperature: latestLog.temperature,
+          turbidity: latestLog.turbidity,
+          dissolved_oxygen: latestLog.dissolved_oxygen,
+          pond_id: parseInt(pondId),
+        });
+
+        if (prediction.success) {
+          mlPrediction = prediction.data;
+        }
+      } catch (mlError) {
+        console.error("ML Prediction error:", mlError.message);
+        // Continue without ML prediction if it fails
+      }
+    }
 
     // Tidak apa-apa jika hasilnya array kosong, tidak perlu error 404
-    res.status(200).json(logs.rows);
+    res.status(200).json({
+      logs: logs.rows,
+      ml_prediction: mlPrediction, // Include ML prediction for latest data
+    });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
-// Fungsi untuk menganalisis kualitas air (Admin Only - Placeholder)
+// Fungsi untuk menganalisis kualitas air menggunakan ML Service
 exports.analyzeWaterQuality = async (req, res) => {
   const { temperature, ph_level, dissolved_oxygen, turbidity } = req.body;
 
@@ -96,29 +151,42 @@ exports.analyzeWaterQuality = async (req, res) => {
       .json({ message: "Semua parameter sensor harus diisi untuk analisis" });
   }
 
-  // --- SIMULASI PEMANGGILAN MODEL ML ---
+  try {
+    // Get ML prediction
+    const prediction = await mlService.predictWaterQuality({
+      ph: ph_level,
+      temperature,
+      turbidity,
+      dissolved_oxygen,
+    });
 
-  let analysisResult = "Kualitas air Baik.";
-  let suggestion =
-    "Kondisi optimal, pertahankan kualitas air dan jadwal pakan.";
-
-  if (ph_level < 6.5 || ph_level > 8.5) {
-    analysisResult = "Kualitas air Perlu Perhatian.";
-    suggestion =
-      "Tingkat pH di luar batas normal. Pertimbangkan untuk melakukan penyesuaian.";
-  } else if (dissolved_oxygen < 5) {
-    analysisResult = "Kualitas air Kurang Baik.";
-    suggestion =
-      "Tingkat oksigen terlarut rendah. Periksa aerator atau pertimbangkan penambahan kincir air.";
+    if (prediction.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Analisis kualitas air berhasil",
+        input_data: {
+          ph: ph_level,
+          temperature,
+          turbidity,
+          dissolved_oxygen,
+        },
+        analysis: prediction.data, // Full ML prediction result
+      });
+    } else {
+      // Fallback if ML service fails
+      return res.status(503).json({
+        success: false,
+        message: "Layanan ML tidak tersedia",
+        error: prediction.error,
+        input_data: req.body,
+      });
+    }
+  } catch (error) {
+    console.error("Analyze water quality error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan pada server",
+      error: error.message,
+    });
   }
-
-  // Mengembalikan hasil simulasi
-  res.status(200).json({
-    message: "Analisis berhasil disimulasikan",
-    input_data: req.body,
-    analysis: {
-      result: analysisResult,
-      suggestion: suggestion,
-    },
-  });
 };

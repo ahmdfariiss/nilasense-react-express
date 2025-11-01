@@ -18,7 +18,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import orderService from "@/services/orderService";
@@ -253,13 +252,21 @@ export function OrderManagementPage({ onNavigate }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-foreground mb-6">Manajemen Pesanan</h1>
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Memuat daftar pesanan...</p>
+      <div className="flex min-h-screen bg-background">
+        <DashboardSidebar
+          onNavigate={onNavigate}
+          currentPage="order-management"
+        />
+        <div className="flex-1">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 className="text-foreground mb-6">Manajemen Pesanan</h1>
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-muted-foreground">
+                  Memuat daftar pesanan...
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -273,7 +280,7 @@ export function OrderManagementPage({ onNavigate }) {
         onNavigate={onNavigate}
         currentPage="order-management"
       />
-      <div className="flex-1">
+      <div className="flex-1 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-foreground">Manajemen Pesanan</h1>
@@ -438,9 +445,15 @@ export function OrderManagementPage({ onNavigate }) {
                             Pembayaran
                           </p>
                           <p>
-                            {selectedOrder.payment_method === "manual_transfer"
-                              ? "Transfer"
-                              : "COD"}
+                            {selectedOrder.payment_method === "midtrans"
+                              ? "Midtrans"
+                              : selectedOrder.payment_method ===
+                                "manual_transfer"
+                              ? "Transfer Manual"
+                              : selectedOrder.payment_method ===
+                                "cash_on_delivery"
+                              ? "COD"
+                              : selectedOrder.payment_method || "N/A"}
                           </p>
                         </div>
                         <div>
@@ -570,13 +583,12 @@ export function OrderManagementPage({ onNavigate }) {
                           >
                             Catatan Admin
                           </label>
-                          <Textarea
+                          <Input
                             id="admin-notes"
                             name="admin-notes"
                             value={adminNotes}
                             onChange={(e) => setAdminNotes(e.target.value)}
                             placeholder="Catatan opsional..."
-                            rows={2}
                           />
                         </div>
                         <div className="flex gap-2 pt-1">

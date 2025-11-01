@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { ImageWithFallback } from "@/components/common/ImageWithFallback";
+import { Footer } from "@/layouts/Footer";
 import { toast } from "sonner";
 import { getProductById } from "@/services/productService";
 import cartService from "@/services/cartService";
@@ -335,6 +336,7 @@ export function ProductDetailPage({ productId, onNavigate }) {
           </div>
         </div>
       </div>
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

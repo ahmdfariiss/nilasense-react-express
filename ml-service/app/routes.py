@@ -123,18 +123,30 @@ def predict_batch_endpoint():
 def model_info():
     """Get information about the loaded model"""
     try:
-        # TODO: Implement model info retrieval
+        from utils.model_utils import get_model_instance
+        
+        model = get_model_instance()
+        info = model.get_model_info()
+        
+        if 'error' in info:
+            # Model not loaded, return basic info
+            return jsonify({
+                'success': False,
+                'error': 'Model not loaded',
+                'fallback_info': {
+                    'model_type': 'Classification',
+                    'algorithm': 'Rule-based (Fallback)',
+                    'features': ['pH', 'Temperature', 'Turbidity', 'Dissolved Oxygen'],
+                    'classes': ['Baik', 'Normal', 'Perlu Perhatian'],
+                    'version': '1.0.0'
+                }
+            }), 503
+        
         return jsonify({
             'success': True,
-            'data': {
-                'model_type': 'Classification',
-                'algorithm': 'Random Forest / Neural Network',
-                'features': ['pH', 'Temperature', 'Turbidity', 'Dissolved Oxygen'],
-                'classes': ['Baik', 'Normal', 'Buruk'],
-                'version': '1.0.0',
-                'trained_date': 'TBD'
-            }
+            'data': info
         }), 200
+        
     except Exception as e:
         return jsonify({
             'success': False,

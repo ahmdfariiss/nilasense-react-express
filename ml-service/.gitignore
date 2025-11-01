@@ -4,9 +4,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
 build/
 develop-eggs/
 dist/
@@ -22,17 +19,40 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # Virtual Environment
 venv/
 ENV/
 env/
+.venv
 
-# Environment Variables
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Model files (large binary files)
+models/trained/*.pkl
+models/trained/*.h5
+models/trained/*.joblib
+models/trained/*.pt
+models/trained/*.pth
+
+# Keep model info
+!models/trained/model_info.json
+!models/trained/.gitkeep
+
+# Logs
+logs/
+*.log
+app.log
+
+# Environment variables
 .env
 .env.local
+.env.*.local
 
-# IDEs
+# IDE
 .vscode/
 .idea/
 *.swp
@@ -43,47 +63,21 @@ env/
 .DS_Store
 Thumbs.db
 
-# Logs
-logs/
-*.log
-
-# Model Files (large files)
-models/trained/*.pkl
-models/trained/*.h5
-models/trained/*.pt
-models/trained/*.pth
-
-# Keep metadata
-!models/trained/model_metadata.json
-
-# Data
+# Data files
 data/raw/*.csv
-data/raw/*.json
 data/processed/*.csv
+!data/samples/Water_Quality_Dataset.csv
 
-# Keep sample data
-!data/samples/*.json
+# Test outputs
+test_prediction_results.json
+test_*.json
 
-# Jupyter Notebooks
-.ipynb_checkpoints/
-notebooks/.ipynb_checkpoints/
-
-# Notebook outputs (optional - uncomment untuk simpan outputs)
-# notebooks/*.ipynb
-
-# Testing
+# Coverage
 .coverage
-.pytest_cache/
 htmlcov/
+.pytest_cache/
 
-# Flask
-instance/
-.webassets-cache
-
-# Kaggle
-kaggle.json
-.kaggle/
-
-# Anaconda
-.conda/
-*.conda
+# Temporary files
+tmp/
+temp/
+*.tmp

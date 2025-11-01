@@ -6,6 +6,7 @@ import {
   CreditCard,
   Phone,
   XCircle,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ImageWithFallback } from "@/components/common/ImageWithFallback";
+import { Footer } from "@/layouts/Footer";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import orderService from "@/services/orderService";
@@ -32,6 +34,7 @@ export function OrderDetailPage({ orderId, onNavigate }) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   useEffect(() => {
     if (user && user.role === "buyer" && orderId) {
@@ -40,6 +43,58 @@ export function OrderDetailPage({ orderId, onNavigate }) {
       setLoading(false);
     }
   }, [user, orderId]);
+
+  // Auto-refresh payment status for Midtrans orders that are still pending
+  useEffect(() => {
+    if (
+      !order ||
+      order.payment_method !== "midtrans" ||
+      order.payment_status === "paid"
+    ) {
+      return;
+    }
+
+    // Poll payment status every 5 seconds for pending Midtrans payments
+    const interval = setInterval(async () => {
+      try {
+        const statusResult = await orderService.checkPaymentStatus(orderId);
+        if (statusResult.success && statusResult.data.order) {
+          const updatedOrder = statusResult.data.order;
+
+          // Update order if status changed
+          if (
+            updatedOrder.payment_status !== order.payment_status ||
+            updatedOrder.status !== order.status
+          ) {
+            setOrder((prev) => ({
+              ...prev,
+              payment_status: updatedOrder.payment_status,
+              status: updatedOrder.status,
+            }));
+
+            if (updatedOrder.payment_status === "paid") {
+              toast.success("Pembayaran dikonfirmasi!", {
+                description: "Status pesanan Anda telah diperbarui",
+              });
+              clearInterval(interval);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error checking payment status:", error);
+      }
+    }, 5000); // Check every 5 seconds
+
+    // Cleanup interval after 5 minutes (stop polling)
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 5 * 60 * 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [order, orderId]);
 
   const fetchOrderDetail = async () => {
     setLoading(true);
@@ -208,6 +263,131 @@ export function OrderDetailPage({ orderId, onNavigate }) {
     return (
       order && (order.status === "pending" || order.status === "confirmed")
     );
+  };
+
+  const canPayNow = () => {
+    return (
+      order &&
+      order.payment_method === "midtrans" &&
+      order.payment_status === "unpaid" &&
+      order.status === "pending"
+    );
+  };
+
+  const handlePayNow = async () => {
+    if (!order || !canPayNow()) {
+      return;
+    }
+
+    setProcessingPayment(true);
+    try {
+      // Create payment token
+      const paymentResult = await orderService.createPayment(orderId);
+
+      if (paymentResult.success && paymentResult.data?.data?.token) {
+        const token = paymentResult.data.data.token;
+
+        // Check if window.snap is available
+        if (typeof window !== "undefined" && window.snap) {
+          window.snap.pay(token, {
+            onSuccess: function (result) {
+              toast.success("Pembayaran berhasil!", {
+                description:
+                  "Terima kasih! Pembayaran Anda telah diterima. Kami akan memproses pesanan Anda segera",
+              });
+
+              // Immediately check payment status and refresh
+              const updateStatus = async () => {
+                try {
+                  const statusResult = await orderService.checkPaymentStatus(
+                    orderId
+                  );
+                  if (statusResult.success && statusResult.data.order) {
+                    const updatedOrder = statusResult.data.order;
+                    setOrder((prev) => ({
+                      ...prev,
+                      payment_status: updatedOrder.payment_status,
+                      status: updatedOrder.status,
+                    }));
+
+                    // If still not paid, retry after delay
+                    if (updatedOrder.payment_status !== "paid") {
+                      setTimeout(updateStatus, 2000);
+                    }
+                  }
+                } catch (error) {
+                  console.error("Error checking payment status:", error);
+                  // Retry after delay
+                  setTimeout(updateStatus, 2000);
+                }
+              };
+
+              // Start checking status immediately and retry if needed
+              updateStatus();
+
+              // Also refresh order detail after a short delay
+              setTimeout(() => {
+                fetchOrderDetail();
+              }, 3000);
+            },
+            onPending: function (result) {
+              toast.info("Menunggu pembayaran", {
+                description:
+                  "Silakan selesaikan pembayaran Anda. Kami akan mengirimkan notifikasi setelah pembayaran diterima",
+              });
+
+              // Refresh order detail
+              setTimeout(() => {
+                fetchOrderDetail();
+              }, 2000);
+            },
+            onError: function (result) {
+              toast.error("Pembayaran gagal", {
+                description:
+                  "Terjadi kesalahan saat proses pembayaran. Silakan coba lagi",
+              });
+            },
+            onClose: function () {
+              toast.info("Pembayaran dibatalkan", {
+                description:
+                  "Anda dapat melanjutkan pembayaran nanti dengan mengklik tombol 'Bayar Sekarang'",
+              });
+            },
+          });
+        } else {
+          toast.error("Midtrans tidak tersedia", {
+            description:
+              "Pastikan Midtrans Snap.js sudah dimuat. Silakan refresh halaman",
+          });
+        }
+      } else {
+        // More detailed error message
+        const errorMsg =
+          paymentResult.error || "Silakan coba lagi atau hubungi admin";
+        const hintMsg = paymentResult.data?.hint || "";
+
+        toast.error("Gagal membuat payment token", {
+          description: hintMsg || errorMsg,
+          duration: 5000, // Show for 5 seconds
+        });
+
+        console.error("Payment token creation failed:", {
+          error: paymentResult.error,
+          hint: hintMsg,
+          fullResponse: paymentResult,
+        });
+      }
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      toast.error("Gagal memproses pembayaran", {
+        description:
+          error.message ||
+          "Terjadi kesalahan. Silakan coba lagi atau refresh halaman",
+        duration: 5000,
+      });
+    } finally {
+      setProcessingPayment(false);
+    }
   };
 
   // Check login and role
@@ -440,6 +620,31 @@ export function OrderDetailPage({ orderId, onNavigate }) {
                 </CardContent>
               </Card>
 
+              {/* Pay Now Button */}
+              {canPayNow() && (
+                <Button
+                  onClick={handlePayNow}
+                  disabled={processingPayment}
+                  className="w-full !bg-green-600 hover:!bg-green-700 !text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                  size="lg"
+                  style={{
+                    backgroundColor: processingPayment ? "#059669" : "#16a34a",
+                  }}
+                >
+                  {processingPayment ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Memproses...
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="w-5 h-5 mr-2" />
+                      Bayar Sekarang
+                    </>
+                  )}
+                </Button>
+              )}
+
               {/* Cancel Order Button */}
               {canCancelOrder() && (
                 <AlertDialog>
@@ -447,7 +652,7 @@ export function OrderDetailPage({ orderId, onNavigate }) {
                     <Button
                       variant="destructive"
                       className="w-full"
-                      disabled={cancelling}
+                      disabled={cancelling || processingPayment}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
                       Batalkan Pesanan
@@ -477,6 +682,7 @@ export function OrderDetailPage({ orderId, onNavigate }) {
           </div>
         </div>
       </div>
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

@@ -1,0 +1,7 @@
+# This file ensures the trained/ directory is tracked by git
+# Model files (.pkl) are ignored but this keeps the directory structure
+
+
+
+
+

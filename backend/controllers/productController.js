@@ -260,7 +260,11 @@ exports.updateProduct = async (req, res) => {
     // Gunakan data baru jika ada, jika tidak, gunakan data yang sudah ada
     const newName = name !== undefined ? name : currentProduct.name;
     const newDescription =
-      description !== undefined ? description : currentProduct.description;
+      description !== undefined
+        ? description === null || description === ""
+          ? null
+          : description
+        : currentProduct.description;
     const newPrice = price !== undefined ? price : currentProduct.price;
     const newStock =
       stock_kg !== undefined ? stock_kg : currentProduct.stock_kg;

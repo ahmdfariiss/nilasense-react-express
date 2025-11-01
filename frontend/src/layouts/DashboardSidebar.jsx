@@ -128,7 +128,7 @@ export function DashboardSidebar({ onNavigate, currentPage }) {
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-64 bg-white border-r border-border">
+      <aside className="hidden lg:block fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] bg-white border-r border-border overflow-y-auto z-30">
         <SidebarContent />
       </aside>
     </>

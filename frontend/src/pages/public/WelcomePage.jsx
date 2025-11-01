@@ -357,7 +357,7 @@ export function WelcomePage({ onNavigate, userRole }) {
         </div>
       </section>
 
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProductCard } from "@/components/common/ProductCard";
+import { Footer } from "@/layouts/Footer";
 import { toast } from "sonner";
 import { getAllProducts } from "@/services/productService";
 
@@ -239,6 +240,7 @@ export function ProductsPage({ onNavigate }) {
           </div>
         )}
       </div>
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

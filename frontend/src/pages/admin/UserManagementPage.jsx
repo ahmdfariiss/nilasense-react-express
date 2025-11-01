@@ -12,6 +12,7 @@ import {
   Mail,
   Calendar,
   Waves,
+  Edit,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -376,6 +377,7 @@ export function UserManagementPage({ onNavigate }) {
   // Form states
   const [showForm, setShowForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [editUser, setEditUser] = useState(null);
 
   // Delete confirmation
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -411,6 +413,7 @@ export function UserManagementPage({ onNavigate }) {
       if (result.success) {
         toast.success(result.message || "User berhasil ditambahkan");
         setShowForm(false);
+        setEditUser(null);
         fetchUsers();
       } else {
         toast.error(result.message || "Gagal menambahkan user");
@@ -419,6 +422,39 @@ export function UserManagementPage({ onNavigate }) {
       toast.error("Gagal menambahkan user");
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const handleUpdateUser = async (formData) => {
+    try {
+      setFormLoading(true);
+      const result = await userService.updateUser(editUser.id, formData);
+
+      if (result.success) {
+        toast.success(result.message || "User berhasil diperbarui");
+        setShowForm(false);
+        setEditUser(null);
+        fetchUsers();
+      } else {
+        toast.error(result.message || "Gagal memperbarui user");
+      }
+    } catch (error) {
+      toast.error("Gagal memperbarui user");
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleEditClick = (user) => {
+    setEditUser(user);
+    setShowForm(true);
+  };
+
+  const handleFormSubmit = (formData) => {
+    if (editUser) {
+      handleUpdateUser(formData);
+    } else {
+      handleCreateUser(formData);
     }
   };
 
@@ -463,7 +499,7 @@ export function UserManagementPage({ onNavigate }) {
           onNavigate={onNavigate}
           currentPage="user-management"
         />
-        <div className="flex-1">
+        <div className="flex-1 lg:ml-64">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary mr-2" />
@@ -478,7 +514,7 @@ export function UserManagementPage({ onNavigate }) {
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar onNavigate={onNavigate} currentPage="user-management" />
-      <div className="flex-1">
+      <div className="flex-1 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -599,7 +635,12 @@ export function UserManagementPage({ onNavigate }) {
                 Refresh
               </Button>
 
-              <Button onClick={() => setShowForm(true)}>
+              <Button
+                onClick={() => {
+                  setEditUser(null);
+                  setShowForm(true);
+                }}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Tambah User
               </Button>
@@ -669,6 +710,16 @@ export function UserManagementPage({ onNavigate }) {
                             <Button
                               size="sm"
                               variant="outline"
+                              onClick={() => handleEditClick(user)}
+                              className="text-blue-600 hover:text-blue-700"
+                              aria-label={`Edit user ${user.name}`}
+                              title={`Edit user ${user.name}`}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
                               onClick={() => setDeleteConfirm(user)}
                               className="text-red-600 hover:text-red-700"
                               aria-label={`Hapus user ${user.name}`}
@@ -701,9 +752,10 @@ export function UserManagementPage({ onNavigate }) {
             isOpen={showForm}
             onClose={() => {
               setShowForm(false);
+              setEditUser(null);
             }}
-            onSubmit={handleCreateUser}
-            editData={null}
+            onSubmit={handleFormSubmit}
+            editData={editUser}
             loading={formLoading}
           />
 

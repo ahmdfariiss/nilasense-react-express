@@ -9,13 +9,13 @@ import {
   ImageIcon,
   DollarSign,
   Box,
+  Edit,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -108,7 +108,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
     }
 
     // When modal opens, populate form based on editData
-    if (isOpen && editData) {
+    if (editData) {
       setFormData({
         name: editData.name || "",
         description: editData.description || "",
@@ -119,7 +119,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
         pond_id: editData.pond_id ? editData.pond_id.toString() : "none",
       });
       setErrors({});
-    } else if (isOpen && !editData) {
+    } else {
       // Modal opened for creating new product
       setFormData({
         name: "",
@@ -132,6 +132,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
       });
       setErrors({});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, editData?.id]); // Only depend on editData.id, not the whole object
 
   const validateForm = () => {
@@ -155,6 +156,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!validateForm()) {
       return;
@@ -179,9 +181,25 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
     "Peralatan",
   ];
 
+  const handleOpenChange = (open) => {
+    // Only close if explicitly set to false and not submitting
+    if (!open && !loading) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => {
+          // Prevent closing when clicking on form elements
+          const target = e.target;
+          if (target.closest && target.closest("form")) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {editData ? "Edit Produk" : "Tambah Produk Baru"}
@@ -193,7 +211,13 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+          autoComplete="on"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="space-y-2">
             <Label htmlFor="product-name">Nama Produk *</Label>
             <Input
@@ -214,7 +238,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
 
           <div className="space-y-2">
             <Label htmlFor="product-description">Deskripsi</Label>
-            <Textarea
+            <Input
               id="product-description"
               name="product-description"
               autoComplete="off"
@@ -225,15 +249,11 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
                   description: e.target.value,
                 }))
               }
-              onKeyDown={(e) => {
-                e.stopPropagation();
-              }}
-              onBlur={(e) => {
-                e.stopPropagation();
-              }}
               placeholder="Deskripsi produk..."
-              rows={3}
             />
+            <p className="text-xs text-muted-foreground">
+              Deskripsi produk (opsional)
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -313,7 +333,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
               onValueChange={(value) =>
                 setFormData((prev) => ({
                   ...prev,
-                  pond_id: value === "none" ? "" : value,
+                  pond_id: value === "none" ? "none" : value,
                 }))
               }
               disabled={loadingPonds}
@@ -375,6 +395,171 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
   );
 };
 
+// Simple Edit Form for Stock, Price, and Description
+const EditProductDialog = ({ isOpen, onClose, product, onUpdate, loading }) => {
+  const [formData, setFormData] = useState({
+    price: "",
+    stock_kg: "",
+    description: "",
+  });
+
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (isOpen && product) {
+      setFormData({
+        price: product.price || "",
+        stock_kg: product.stock_kg || product.stock || "",
+        description: product.description || "",
+      });
+      setErrors({});
+    }
+  }, [isOpen, product?.id]);
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      newErrors.price = "Harga harus lebih dari 0";
+    }
+
+    if (formData.stock_kg === "" || parseFloat(formData.stock_kg) < 0) {
+      newErrors.stock_kg = "Stok tidak boleh negatif";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    const submitData = {
+      price: parseFloat(formData.price),
+      stock_kg: parseFloat(formData.stock_kg),
+    };
+
+    // Only include description if it has a value or is explicitly cleared
+    const trimmedDescription = formData.description.trim();
+    if (trimmedDescription !== "") {
+      submitData.description = trimmedDescription;
+    } else {
+      // If empty, send null to clear the description
+      submitData.description = null;
+    }
+
+    onUpdate(product.id, submitData);
+  };
+
+  if (!product) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Produk: {product.name}</DialogTitle>
+          <DialogDescription>
+            Dapat mengubah harga, stok, dan deskripsi produk
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-price">Harga (Rp/kg) *</Label>
+              <Input
+                id="edit-price"
+                name="edit-price"
+                type="number"
+                step="0.01"
+                min="0"
+                autoComplete="off"
+                value={formData.price}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, price: e.target.value }))
+                }
+                placeholder="50000"
+                className={errors.price ? "border-red-500" : ""}
+              />
+              {errors.price && (
+                <p className="text-sm text-red-500">{errors.price}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-stock">Stok (kg) *</Label>
+              <Input
+                id="edit-stock"
+                name="edit-stock"
+                type="number"
+                step="0.1"
+                min="0"
+                autoComplete="off"
+                value={formData.stock_kg}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    stock_kg: e.target.value,
+                  }))
+                }
+                placeholder="100"
+                className={errors.stock_kg ? "border-red-500" : ""}
+              />
+              {errors.stock_kg && (
+                <p className="text-sm text-red-500">{errors.stock_kg}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-description">Deskripsi</Label>
+            <Input
+              id="edit-description"
+              name="edit-description"
+              autoComplete="off"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
+              placeholder="Deskripsi produk..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Deskripsi produk (opsional)
+            </p>
+          </div>
+
+          <div className="bg-muted/50 p-3 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              <strong>Produk:</strong> {product.name}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              <strong>Kategori:</strong> {product.category}
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Simpan Perubahan
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export function ProductManagementPage({ onNavigate }) {
   // State management
   const [products, setProducts] = useState([]);
@@ -386,6 +571,10 @@ export function ProductManagementPage({ onNavigate }) {
   // Form states
   const [showForm, setShowForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+
+  // Edit states
+  const [editProduct, setEditProduct] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   // Delete confirmation
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -429,6 +618,25 @@ export function ProductManagementPage({ onNavigate }) {
       toast.error("Gagal menambahkan produk");
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const handleUpdateProduct = async (productId, updateData) => {
+    try {
+      setEditLoading(true);
+      const result = await updateProduct(productId, updateData);
+
+      if (result.success) {
+        toast.success(result.message || "Produk berhasil diperbarui");
+        setEditProduct(null);
+        fetchProducts();
+      } else {
+        toast.error(result.error || "Gagal memperbarui produk");
+      }
+    } catch (error) {
+      toast.error("Gagal memperbarui produk");
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -499,7 +707,7 @@ export function ProductManagementPage({ onNavigate }) {
           onNavigate={onNavigate}
           currentPage="product-management"
         />
-        <div className="flex-1">
+        <div className="flex-1 lg:ml-64">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary mr-2" />
@@ -517,7 +725,7 @@ export function ProductManagementPage({ onNavigate }) {
         onNavigate={onNavigate}
         currentPage="product-management"
       />
-      <div className="flex-1">
+      <div className="flex-1 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -712,6 +920,16 @@ export function ProductManagementPage({ onNavigate }) {
                             <Button
                               size="sm"
                               variant="outline"
+                              onClick={() => setEditProduct(product)}
+                              className="text-blue-600 hover:text-blue-700"
+                              aria-label={`Edit produk ${product.name}`}
+                              title={`Edit harga dan stok ${product.name}`}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
                               onClick={() => setDeleteConfirm(product)}
                               className="text-red-600 hover:text-red-700"
                               aria-label={`Hapus produk ${product.name}`}
@@ -748,6 +966,15 @@ export function ProductManagementPage({ onNavigate }) {
             onSubmit={handleCreateProduct}
             editData={null}
             loading={formLoading}
+          />
+
+          {/* Edit Dialog */}
+          <EditProductDialog
+            isOpen={!!editProduct}
+            onClose={() => setEditProduct(null)}
+            product={editProduct}
+            onUpdate={handleUpdateProduct}
+            loading={editLoading}
           />
 
           {/* Delete Confirmation */}

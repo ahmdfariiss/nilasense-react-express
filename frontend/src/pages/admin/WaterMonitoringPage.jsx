@@ -13,6 +13,11 @@ import {
   Plus,
   Loader2,
   AlertCircle,
+  AlertTriangle,
+  Lightbulb,
+  CheckSquare,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -259,11 +264,14 @@ export function WaterMonitoringPage({ onNavigate }) {
   const [logs, setLogs] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [currentStatus, setCurrentStatus] = useState(null);
+  const [mlPrediction, setMlPrediction] = useState(null);
 
   // State untuk UI
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [timeRange, setTimeRange] = useState("7");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // State untuk form add log
   const [showAddLogForm, setShowAddLogForm] = useState(false);
@@ -279,6 +287,8 @@ export function WaterMonitoringPage({ onNavigate }) {
     if (selectedPondId) {
       fetchWaterQualityLogs();
     }
+    // Reset to first page when pond or time range changes
+    setCurrentPage(1);
   }, [selectedPondId, timeRange]);
 
   const fetchPonds = async () => {
@@ -323,6 +333,13 @@ export function WaterMonitoringPage({ onNavigate }) {
 
       if (result.success) {
         setLogs(result.data);
+
+        // Set ML prediction if available
+        if (result.mlPrediction) {
+          setMlPrediction(result.mlPrediction);
+        } else {
+          setMlPrediction(null);
+        }
 
         // Format data for charts
         const formatted = monitoringService.formatChartData(result.data);
@@ -372,6 +389,7 @@ export function WaterMonitoringPage({ onNavigate }) {
         setLogs([]);
         setChartData([]);
         setCurrentStatus(null);
+        setMlPrediction(null);
       }
     } catch (error) {
       toast.error("Gagal memuat data monitoring");
@@ -400,7 +418,14 @@ export function WaterMonitoringPage({ onNavigate }) {
       if (result.success) {
         toast.success(result.message || "Data monitoring berhasil ditambahkan");
         setShowAddLogForm(false);
-        fetchWaterQualityLogs();
+
+        // Refresh logs and ML prediction
+        await fetchWaterQualityLogs();
+
+        // If ML prediction is in response, update it
+        if (result.data?.ml_prediction) {
+          setMlPrediction(result.data.ml_prediction);
+        }
       } else {
         toast.error(result.message || "Gagal menambahkan data monitoring");
       }
@@ -476,6 +501,23 @@ export function WaterMonitoringPage({ onNavigate }) {
     }
   };
 
+  const getMLQualityBadge = (quality) => {
+    if (!quality) return null;
+
+    const qualityLower = quality.toLowerCase();
+    if (qualityLower === "baik") {
+      return <Badge className="bg-[#10b981] text-white">Baik</Badge>;
+    } else if (qualityLower === "normal") {
+      return <Badge className="bg-[#0891b2] text-white">Normal</Badge>;
+    } else if (
+      qualityLower.includes("perhatian") ||
+      qualityLower.includes("buruk")
+    ) {
+      return <Badge className="bg-[#f59e0b] text-white">Perlu Perhatian</Badge>;
+    }
+    return <Badge variant="outline">{quality}</Badge>;
+  };
+
   const formatDateTime = (timestamp) => {
     const date = new Date(timestamp);
     return {
@@ -499,7 +541,7 @@ export function WaterMonitoringPage({ onNavigate }) {
           onNavigate={onNavigate}
           currentPage="water-monitoring"
         />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 lg:ml-64 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Memuat data...</p>
@@ -516,7 +558,7 @@ export function WaterMonitoringPage({ onNavigate }) {
           onNavigate={onNavigate}
           currentPage="water-monitoring"
         />
-        <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex-1 lg:ml-64 flex items-center justify-center p-8">
           <Card className="max-w-md">
             <CardContent className="p-8 text-center">
               <AlertCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -542,7 +584,7 @@ export function WaterMonitoringPage({ onNavigate }) {
         onNavigate={onNavigate}
         currentPage="water-monitoring"
       />
-      <div className="flex-1">
+      <div className="flex-1 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -692,6 +734,156 @@ export function WaterMonitoringPage({ onNavigate }) {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* ML Prediction Section */}
+              {mlPrediction && (
+                <div className="mb-8 space-y-6">
+                  {/* Prediction Results Card */}
+                  <Card className="border-l-4 border-l-primary">
+                    <CardHeader>
+                      <CardTitle>Hasil Prediksi Kualitas Air (ML)</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Analisis berdasarkan Machine Learning Model
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">
+                            Kualitas
+                          </p>
+                          <div className="flex items-center gap-2">
+                            {getMLQualityBadge(mlPrediction.quality)}
+                            <p className="text-2xl font-bold">
+                              {mlPrediction.quality || "N/A"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground mb-1">
+                            Confidence
+                          </p>
+                          <p className="text-2xl font-bold text-primary">
+                            {mlPrediction.confidence
+                              ? `${(mlPrediction.confidence * 100).toFixed(2)}%`
+                              : "N/A"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      {mlPrediction.description && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                            <Droplet className="w-5 h-5" />
+                            Deskripsi
+                          </h3>
+                          <div className="p-4 bg-muted/30 rounded-lg">
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                              {mlPrediction.description}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Issues */}
+                      {mlPrediction.issues &&
+                        mlPrediction.issues.length > 0 && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                              <AlertTriangle className="w-5 h-5 text-amber-500" />
+                              Masalah yang Terdeteksi
+                            </h3>
+                            <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                              <ul className="space-y-2">
+                                {mlPrediction.issues.map((issue, index) => (
+                                  <li
+                                    key={index}
+                                    className="text-sm flex items-start gap-2"
+                                  >
+                                    <span className="text-amber-600 dark:text-amber-400 mt-1">
+                                      •
+                                    </span>
+                                    <span>{issue}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Recommendations */}
+                      {mlPrediction.recommendations &&
+                        mlPrediction.recommendations.length > 0 && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                              <Lightbulb className="w-5 h-5 text-yellow-500" />
+                              Rekomendasi
+                            </h3>
+                            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <ol className="space-y-2">
+                                {mlPrediction.recommendations.map(
+                                  (recommendation, index) => (
+                                    <li
+                                      key={index}
+                                      className="text-sm flex items-start gap-2"
+                                    >
+                                      <span className="text-blue-600 dark:text-blue-400 font-semibold mt-1">
+                                        {index + 1}.
+                                      </span>
+                                      <span>{recommendation}</span>
+                                    </li>
+                                  )
+                                )}
+                              </ol>
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Class Probabilities */}
+                      {mlPrediction.probabilities && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                            <CheckSquare className="w-5 h-5" />
+                            Probabilitas Kualitas Air
+                          </h3>
+                          <div className="p-4 bg-muted/30 rounded-lg">
+                            <div className="space-y-2">
+                              {Object.entries(mlPrediction.probabilities).map(
+                                ([quality, prob]) => (
+                                  <div
+                                    key={quality}
+                                    className="flex items-center justify-between"
+                                  >
+                                    <span className="text-sm font-medium">
+                                      {quality}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+                                        <div
+                                          className="h-full bg-primary transition-all"
+                                          style={{
+                                            width: `${(prob * 100).toFixed(
+                                              1
+                                            )}%`,
+                                          }}
+                                        />
+                                      </div>
+                                      <span className="text-sm text-muted-foreground w-12 text-right">
+                                        {(prob * 100).toFixed(2)}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
 
               {/* Charts Section */}
               {chartData.length > 0 && (
@@ -915,33 +1107,51 @@ export function WaterMonitoringPage({ onNavigate }) {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {logs.length > 0 ? (
-                          logs.slice(0, 20).map((log, index) => {
-                            const { date, time } = formatDateTime(
-                              log.logged_at
-                            );
+                        {(() => {
+                          // Calculate pagination
+                          const totalPages = Math.ceil(
+                            logs.length / itemsPerPage
+                          );
+                          const startIndex = (currentPage - 1) * itemsPerPage;
+                          const endIndex = startIndex + itemsPerPage;
+                          const paginatedLogs = logs.slice(
+                            startIndex,
+                            endIndex
+                          );
+
+                          if (logs.length > 0) {
+                            return paginatedLogs.map((log, index) => {
+                              const { date, time } = formatDateTime(
+                                log.logged_at
+                              );
+                              return (
+                                <TableRow key={log.id || index}>
+                                  <TableCell>{time}</TableCell>
+                                  <TableCell>{date}</TableCell>
+                                  <TableCell>{log.temperature}°C</TableCell>
+                                  <TableCell>{log.ph_level}</TableCell>
+                                  <TableCell>{log.turbidity} NTU</TableCell>
+                                  <TableCell>
+                                    {log.dissolved_oxygen} mg/L
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            });
+                          } else {
                             return (
-                              <TableRow key={index}>
-                                <TableCell>{time}</TableCell>
-                                <TableCell>{date}</TableCell>
-                                <TableCell>{log.temperature}°C</TableCell>
-                                <TableCell>{log.ph_level}</TableCell>
-                                <TableCell>{log.turbidity} NTU</TableCell>
-                                <TableCell>
-                                  {log.dissolved_oxygen} mg/L
+                              <TableRow>
+                                <TableCell
+                                  colSpan={6}
+                                  className="text-center py-8"
+                                >
+                                  <div className="text-muted-foreground">
+                                    Belum ada data monitoring
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             );
-                          })
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8">
-                              <div className="text-muted-foreground">
-                                Belum ada data monitoring
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
+                          }
+                        })()}
                       </TableBody>
                     </Table>
                   </div>
@@ -951,9 +1161,111 @@ export function WaterMonitoringPage({ onNavigate }) {
                         className="text-muted-foreground"
                         style={{ fontSize: "0.875rem" }}
                       >
-                        Menampilkan {Math.min(20, logs.length)} dari{" "}
-                        {logs.length} data
+                        Menampilkan{" "}
+                        {(() => {
+                          const startIndex = (currentPage - 1) * itemsPerPage;
+                          const endIndex = Math.min(
+                            startIndex + itemsPerPage,
+                            logs.length
+                          );
+                          const totalPages = Math.ceil(
+                            logs.length / itemsPerPage
+                          );
+                          return `${startIndex + 1}-${endIndex} dari ${
+                            logs.length
+                          } data (Halaman ${currentPage} dari ${totalPages})`;
+                        })()}
                       </p>
+                      {(() => {
+                        const totalPages = Math.ceil(
+                          logs.length / itemsPerPage
+                        );
+                        if (totalPages <= 1) return null;
+
+                        return (
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setCurrentPage((prev) => Math.max(1, prev - 1))
+                              }
+                              disabled={currentPage === 1}
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <div className="flex items-center gap-1">
+                              {Array.from(
+                                { length: totalPages },
+                                (_, i) => i + 1
+                              ).map((page) => {
+                                // Show first page, last page, current page, and pages around current
+                                const showPage =
+                                  page === 1 ||
+                                  page === totalPages ||
+                                  (page >= currentPage - 1 &&
+                                    page <= currentPage + 1);
+
+                                if (!showPage) {
+                                  // Show ellipsis
+                                  const prevPage = page - 1;
+                                  const nextPage = page + 1;
+                                  if (
+                                    (prevPage === 1 ||
+                                      prevPage === currentPage - 2) &&
+                                    (nextPage === totalPages ||
+                                      nextPage === currentPage + 2)
+                                  ) {
+                                    return (
+                                      <span
+                                        key={page}
+                                        className="px-2 text-muted-foreground"
+                                      >
+                                        ...
+                                      </span>
+                                    );
+                                  }
+                                  return null;
+                                }
+
+                                return (
+                                  <Button
+                                    key={page}
+                                    variant={
+                                      currentPage === page
+                                        ? "default"
+                                        : "outline"
+                                    }
+                                    size="sm"
+                                    onClick={() => setCurrentPage(page)}
+                                    className="min-w-[32px]"
+                                  >
+                                    {page}
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setCurrentPage((prev) =>
+                                  Math.min(
+                                    Math.ceil(logs.length / itemsPerPage),
+                                    prev + 1
+                                  )
+                                )
+                              }
+                              disabled={
+                                currentPage >=
+                                Math.ceil(logs.length / itemsPerPage)
+                              }
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </CardContent>

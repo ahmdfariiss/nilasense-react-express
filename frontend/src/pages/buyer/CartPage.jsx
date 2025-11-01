@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ImageWithFallback } from "@/components/common/ImageWithFallback";
+import { Footer } from "@/layouts/Footer";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import cartService from "@/services/cartService";
@@ -349,6 +350,7 @@ export function CartPage({ onNavigate }) {
           </div>
         </div>
       </div>
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

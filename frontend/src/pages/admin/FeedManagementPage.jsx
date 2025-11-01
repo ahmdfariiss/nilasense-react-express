@@ -457,7 +457,7 @@ export function FeedManagementPage({ onNavigate }) {
           onNavigate={onNavigate}
           currentPage="feed-management"
         />
-        <div className="flex-1">
+        <div className="flex-1 lg:ml-64">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary mr-2" />
@@ -472,7 +472,7 @@ export function FeedManagementPage({ onNavigate }) {
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar onNavigate={onNavigate} currentPage="feed-management" />
-      <div className="flex-1">
+      <div className="flex-1 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">

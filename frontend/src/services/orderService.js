@@ -108,6 +108,44 @@ export const updateOrderStatus = async (orderId, data) => {
   }
 };
 
+/**
+ * Create Midtrans payment token
+ * @param {number} orderId
+ * @returns {Promise<{success: boolean, data?: object, error?: string}>}
+ */
+export const createPayment = async (orderId) => {
+  try {
+    const response = await api.post("/payments/create", { order_id: orderId });
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Error creating payment:", error);
+    return {
+      success: false,
+      error: error.response?.data?.message || "Gagal membuat payment token",
+      data: error.response?.data, // Include full error response including hint
+    };
+  }
+};
+
+/**
+ * Check payment status
+ * @param {number} orderId
+ * @returns {Promise<{success: boolean, data?: object, error?: string}>}
+ */
+export const checkPaymentStatus = async (orderId) => {
+  try {
+    const response = await api.get(`/payments/status/${orderId}`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Error checking payment status:", error);
+    return {
+      success: false,
+      error:
+        error.response?.data?.message || "Gagal memeriksa status pembayaran",
+    };
+  }
+};
+
 const orderService = {
   createOrder,
   getMyOrders,
@@ -115,6 +153,8 @@ const orderService = {
   cancelOrder,
   getOrdersForAdmin,
   updateOrderStatus,
+  createPayment,
+  checkPaymentStatus,
 };
 
 export default orderService;

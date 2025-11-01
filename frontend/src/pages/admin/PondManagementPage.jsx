@@ -9,13 +9,13 @@ import {
   MapPin,
   Calendar,
   Activity,
+  Edit,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -113,9 +113,25 @@ const PondForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
     onSubmit(formData);
   };
 
+  const handleOpenChange = (open) => {
+    // Only close if explicitly set to false and not submitting
+    if (!open && !loading) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="sm:max-w-[500px]"
+        onInteractOutside={(e) => {
+          // Prevent closing when clicking on form elements
+          const target = e.target;
+          if (target.closest && target.closest("form")) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {editData ? "Edit Kolam" : "Tambah Kolam Baru"}
@@ -127,7 +143,13 @@ const PondForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+          autoComplete="on"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="space-y-2">
             <Label htmlFor="pond-name">Nama Kolam *</Label>
             <Input
@@ -166,25 +188,18 @@ const PondForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
 
           <div className="space-y-2">
             <Label htmlFor="pond-description">Deskripsi</Label>
-            <Textarea
+            <Input
               id="pond-description"
               name="pond-description"
               autoComplete="off"
-              value={formData.description}
+              value={formData.description || ""}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
                   description: e.target.value,
                 }))
               }
-              onKeyDown={(e) => {
-                e.stopPropagation();
-              }}
-              onBlur={(e) => {
-                e.stopPropagation();
-              }}
               placeholder="Deskripsi kolam (opsional)..."
-              rows={3}
             />
           </div>
 
@@ -212,6 +227,7 @@ export function PondManagementPage({ onNavigate }) {
 
   // Form states
   const [showForm, setShowForm] = useState(false);
+  const [editPond, setEditPond] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Delete confirmation
@@ -256,6 +272,33 @@ export function PondManagementPage({ onNavigate }) {
       toast.error("Gagal menambahkan kolam");
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const handleUpdatePond = async (pondId, formData) => {
+    try {
+      setFormLoading(true);
+      const result = await pondService.updatePond(pondId, formData);
+
+      if (result.success) {
+        toast.success(result.message || "Kolam berhasil diperbarui");
+        setEditPond(null);
+        fetchPonds();
+      } else {
+        toast.error(result.message || "Gagal memperbarui kolam");
+      }
+    } catch (error) {
+      toast.error("Gagal memperbarui kolam");
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleFormSubmit = async (formData) => {
+    if (editPond) {
+      await handleUpdatePond(editPond.id, formData);
+    } else {
+      await handleCreatePond(formData);
     }
   };
 
@@ -317,7 +360,7 @@ export function PondManagementPage({ onNavigate }) {
           onNavigate={onNavigate}
           currentPage="pond-management"
         />
-        <div className="flex-1">
+        <div className="flex-1 lg:ml-64">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary mr-2" />
@@ -332,7 +375,7 @@ export function PondManagementPage({ onNavigate }) {
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar onNavigate={onNavigate} currentPage="pond-management" />
-      <div className="flex-1">
+      <div className="flex-1 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -499,6 +542,16 @@ export function PondManagementPage({ onNavigate }) {
                             <Button
                               size="sm"
                               variant="outline"
+                              onClick={() => setEditPond(pond)}
+                              className="text-blue-600 hover:text-blue-700"
+                              aria-label={`Edit kolam ${pond.name}`}
+                              title={`Edit kolam ${pond.name}`}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
                               onClick={() => setDeleteConfirm(pond)}
                               className="text-red-600 hover:text-red-700"
                               aria-label={`Hapus kolam ${pond.name}`}
@@ -528,12 +581,13 @@ export function PondManagementPage({ onNavigate }) {
 
           {/* Form Dialog */}
           <PondForm
-            isOpen={showForm}
+            isOpen={showForm || !!editPond}
             onClose={() => {
               setShowForm(false);
+              setEditPond(null);
             }}
-            onSubmit={handleCreatePond}
-            editData={null}
+            onSubmit={handleFormSubmit}
+            editData={editPond}
             loading={formLoading}
           />
 

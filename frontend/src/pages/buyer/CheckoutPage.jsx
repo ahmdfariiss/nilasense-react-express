@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageWithFallback } from "@/components/common/ImageWithFallback";
+import { Footer } from "@/layouts/Footer";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import cartService from "@/services/cartService";
@@ -162,14 +163,127 @@ export function CheckoutPage({ onNavigate }) {
     const result = await orderService.createOrder(orderData);
 
     if (result.success) {
-      toast.success("Pesanan berhasil dibuat!", {
-        description: `Nomor pesanan: ${result.data.order.order_number}`,
-      });
+      const orderId = result.data.order.id;
 
-      // Navigate to order history
-      setTimeout(() => {
-        onNavigate("order-history");
-      }, 1500);
+      // If payment method is Midtrans, create payment token and redirect to Midtrans
+      if (formData.payment_method === "midtrans") {
+        try {
+          const paymentResult = await orderService.createPayment(orderId);
+
+          if (paymentResult.success && window.snap) {
+            // Redirect to Midtrans payment page
+            window.snap.pay(paymentResult.data.data.token, {
+              onSuccess: async function (result) {
+                // Wait a bit for webhook to process, then check payment status
+                toast.success("Pembayaran berhasil!", {
+                  description: "Memperbarui status pesanan...",
+                });
+
+                // Check payment status multiple times to ensure it's updated
+                let attempts = 0;
+                const maxAttempts = 5;
+                const checkStatus = async () => {
+                  try {
+                    const statusResult = await orderService.checkPaymentStatus(
+                      orderId
+                    );
+
+                    if (statusResult.success && statusResult.data.order) {
+                      const updatedOrder = statusResult.data.order;
+
+                      if (updatedOrder.payment_status === "paid") {
+                        toast.success("Pembayaran dikonfirmasi!", {
+                          description:
+                            "Status pesanan telah diperbarui. Pesanan Anda sedang diproses",
+                        });
+                        setTimeout(() => {
+                          onNavigate("order-history");
+                        }, 2000);
+                        return;
+                      }
+                    }
+
+                    // If not paid yet, retry after delay
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                      setTimeout(checkStatus, 2000); // Check again after 2 seconds
+                    } else {
+                      // Max attempts reached, navigate anyway
+                      toast.info("Pembayaran berhasil!", {
+                        description:
+                          "Status akan diperbarui dalam beberapa saat. Silakan cek halaman pesanan",
+                      });
+                      setTimeout(() => {
+                        onNavigate("order-history");
+                      }, 1500);
+                    }
+                  } catch (error) {
+                    console.error("Error checking payment status:", error);
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                      setTimeout(checkStatus, 2000);
+                    } else {
+                      toast.success("Pembayaran berhasil!", {
+                        description: "Status akan diperbarui segera",
+                      });
+                      setTimeout(() => {
+                        onNavigate("order-history");
+                      }, 1500);
+                    }
+                  }
+                };
+
+                // Start checking status after 2 seconds delay
+                setTimeout(checkStatus, 2000);
+              },
+              onPending: function (result) {
+                toast.info("Menunggu pembayaran", {
+                  description:
+                    "Silakan selesaikan pembayaran Anda. Kami akan mengirimkan notifikasi setelah pembayaran diterima",
+                });
+                setTimeout(() => {
+                  onNavigate("order-history");
+                }, 2000);
+              },
+              onError: function (result) {
+                toast.error("Pembayaran gagal", {
+                  description:
+                    "Terjadi kesalahan saat proses pembayaran. Silakan coba lagi",
+                });
+              },
+              onClose: function () {
+                toast.info("Pembayaran dibatalkan", {
+                  description:
+                    "Anda dapat melanjutkan pembayaran dari halaman riwayat pesanan",
+                });
+                setTimeout(() => {
+                  onNavigate("order-history");
+                }, 1500);
+              },
+            });
+          } else {
+            toast.error("Gagal membuat payment token", {
+              description: paymentResult.error || "Silakan coba lagi",
+            });
+          }
+        } catch (error) {
+          console.error("Error creating payment:", error);
+          toast.error("Gagal membuat payment token", {
+            description:
+              "Silakan coba lagi atau gunakan metode pembayaran lain",
+          });
+        }
+      } else {
+        // For manual transfer or COD, just show success message
+        toast.success("Pesanan berhasil dibuat!", {
+          description: `Nomor pesanan: ${result.data.order.order_number}`,
+        });
+
+        // Navigate to order history
+        setTimeout(() => {
+          onNavigate("order-history");
+        }, 1500);
+      }
     } else {
       toast.error("Gagal membuat pesanan", {
         description: result.error,
@@ -435,8 +549,11 @@ export function CheckoutPage({ onNavigate }) {
                         <SelectValue placeholder="Pilih metode pembayaran" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="midtrans">
+                          💳 Midtrans (Kartu Kredit/Debit, E-Wallet, dll)
+                        </SelectItem>
                         <SelectItem value="manual_transfer">
-                          Transfer Bank
+                          Transfer Bank Manual
                         </SelectItem>
                         <SelectItem value="cash_on_delivery">
                           Bayar di Tempat (COD)
@@ -556,6 +673,7 @@ export function CheckoutPage({ onNavigate }) {
           </div>
         </form>
       </div>
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

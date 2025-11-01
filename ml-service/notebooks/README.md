@@ -1,103 +1,212 @@
-# 📓 Jupyter Notebooks
+# 📓 NilaSense - Jupyter Notebooks
 
-Folder ini berisi Jupyter Notebooks untuk ML development workflow.
+Folder ini berisi Jupyter notebooks untuk pengembangan dan training model Machine Learning.
 
-## 📋 Workflow Notebooks
+## 📁 Contents
 
-Gunakan notebooks ini secara berurutan:
+### 1. `water_quality_model_training.ipynb`
 
-### 1️⃣ Data Exploration
+**Main training notebook untuk model klasifikasi kualitas air**
 
-`01_data_exploration.ipynb`
+#### 🎯 Tujuan
 
-- Load dataset dari Kaggle
-- Exploratory Data Analysis (EDA)
-- Visualizations
-- Statistical analysis
+Melatih model Random Forest Classifier untuk mengklasifikasikan kualitas air kolam ikan nila berdasarkan 4 parameter sensor IoT.
 
-### 2️⃣ Data Preprocessing
+#### 📊 Input Features
 
-`02_preprocessing.ipynb`
+1. **pH** - Tingkat keasaman/basa air (ideal: 6.5-8.5)
+2. **Suhu (Temperature)** - Suhu air dalam °C (ideal: 25-30°C)
+3. **Kekeruhan (Turbidity)** - Tingkat kekeruhan dalam NTU (ideal: <25 NTU)
+4. **Oksigen Terlarut (DO)** - Kadar oksigen dalam mg/L (ideal: >5 mg/L)
 
-- Handle missing values
-- Feature engineering
-- Data normalization/scaling
-- Train-test split
-- Export processed data
+#### 🏷️ Output Classes
 
-### 3️⃣ Model Training
+- **Baik** - Kondisi optimal untuk pertumbuhan ikan nila
+- **Normal** - Kondisi masih layak namun perlu monitoring
+- **Perlu Perhatian** - Kondisi berbahaya, perlu tindakan segera
 
-`03_model_training.ipynb`
+#### 📦 What's Included
 
-- Train multiple models (Random Forest, Neural Network, etc.)
-- Hyperparameter tuning
-- Model comparison
-- Save best model
+1. **Data Loading & EDA**
 
-### 4️⃣ Model Evaluation
+   - Load dataset dari `data/samples/Water_Quality_Dataset.csv`
+   - Exploratory data analysis dengan visualisasi
+   - Statistik deskriptif per kelas
 
-`04_model_evaluation.ipynb`
+2. **Data Preprocessing**
 
-- Performance metrics
-- Confusion matrix
-- Feature importance
-- ROC curves
-- Model analysis
+   - Feature selection (4 parameter utama)
+   - Label mapping (0,1,2 → Baik/Normal/Perlu Perhatian)
+   - Train-test split (80-20)
+   - Feature scaling dengan StandardScaler
 
-### 5️⃣ Model Export
+3. **Model Training**
 
-`05_model_export.ipynb`
+   - Baseline Random Forest model
+   - Hyperparameter tuning dengan GridSearchCV
+   - 5-fold cross-validation
 
-- Export model to .pkl
-- Export scaler and encoders
-- Create model metadata
-- Prepare for Flask integration
+4. **Model Evaluation**
 
-## 🚀 Quick Start
+   - Classification report (precision, recall, f1-score)
+   - Confusion matrix
+   - Feature importance analysis
+   - Cross-validation scores
+
+5. **Model Saving**
+
+   - Trained model → `models/trained/water_quality_rf_model.pkl`
+   - Scaler → `models/trained/scaler.pkl`
+   - Metadata → `models/trained/model_metadata.pkl`
+
+6. **Description Generator**
+
+   - Fungsi untuk generate deskripsi kondisi ikan
+   - Rekomendasi tindakan berdasarkan parameter
+   - Issue detection (parameter di luar rentang ideal)
+
+7. **Testing**
+   - Test dengan 3 contoh kasus:
+     - Air BAIK (optimal)
+     - Air NORMAL
+     - Air PERLU PERHATIAN (buruk)
+
+## 🚀 How to Use
+
+### 1. Setup Environment
 
 ```bash
-# Activate conda environment
-conda activate nilasense
-
-# Start Jupyter
+# Activate virtual environment
 cd ml-service
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Install Jupyter
+pip install jupyter notebook ipykernel
+```
+
+### 2. Start Jupyter Notebook
+
+```bash
+# From ml-service directory
 jupyter notebook
-
-# Or Jupyter Lab
-jupyter lab
 ```
 
-## 📊 Dataset
+Browser akan otomatis terbuka. Navigate ke `notebooks/` dan buka `water_quality_model_training.ipynb`.
 
-Simpan dataset dari Kaggle di:
+### 3. Run the Notebook
+
+**Option 1: Run All Cells**
+
+- Menu → Cell → Run All
+- Atau tekan `Shift + Enter` untuk run cell by cell
+
+**Option 2: Run from Command Line**
+
+```bash
+jupyter nbconvert --to notebook --execute water_quality_model_training.ipynb
+```
+
+### 4. Check Output
+
+Setelah training selesai, cek folder `models/trained/`:
 
 ```
-../data/raw/water_quality_dataset.csv
+models/trained/
+├── water_quality_rf_model.pkl    # Trained model
+├── scaler.pkl                     # StandardScaler
+└── model_metadata.pkl             # Model info & metrics
 ```
 
-## 💾 Output Files
+## 📊 Expected Results
 
-Setelah training, files akan tersimpan di:
+Berdasarkan training dengan dataset yang ada, model seharusnya mencapai:
 
-- `../models/trained/water_quality_model.pkl` - Trained model
-- `../models/trained/scaler.pkl` - Feature scaler
-- `../models/trained/label_encoder.pkl` - Label encoder
-- `../models/trained/model_metadata.json` - Model info
+- **Accuracy**: ~95-99%
+- **Precision**: ~95-99%
+- **Recall**: ~95-99%
+- **F1-Score**: ~95-99%
 
-## 📝 Notes
+_Note: Actual results may vary depending on the dataset._
 
-- Commit notebooks after setiap milestone
-- Clear output sebelum commit (untuk ukuran file)
-- Document findings di markdown cells
-- Save multiple versions jika experiment baru
+## 🔧 Troubleshooting
 
-## 🎯 Tips
+### Error: Module not found
 
-1. Run cells secara berurutan
-2. Restart kernel jika ada error
-3. Save regularly (Ctrl+S)
-4. Export notebooks as HTML untuk dokumentasi
+```bash
+pip install -r ../requirements.txt
+```
 
----
+### Kernel not found
 
-Happy experimenting! 🧪🤖
+```bash
+python -m ipykernel install --user --name=nilasense-ml
+```
+
+Lalu di Jupyter: Kernel → Change kernel → nilasense-ml
+
+### Memory Error
+
+Jika dataset terlalu besar:
+
+- Gunakan sample data lebih kecil
+- Reduce GridSearchCV parameter combinations
+- Increase system RAM atau use Google Colab
+
+### Model files not saved
+
+Check permissions pada folder `models/trained/` dan pastikan folder exists.
+
+## 📝 Notes for Development
+
+### Modifying Hyperparameters
+
+Edit cell dengan `param_grid`:
+
+```python
+param_grid = {
+    'n_estimators': [100, 200],      # Reduce untuk faster training
+    'max_depth': [10, 20, None],
+    'min_samples_split': [2, 5],
+    'min_samples_leaf': [1, 2],
+    'max_features': ['sqrt']
+}
+```
+
+### Adding New Features
+
+1. Update feature selection cell
+2. Update `feature_names` list
+3. Retrain model
+4. Update `utils/model_utils.py` accordingly
+
+### Changing Classes
+
+Jika ingin ubah klasifikasi (misal: 4 kelas):
+
+1. Update `label_mapping` dictionary
+2. Adjust description generator logic
+3. Retrain model
+
+## 🔗 Integration
+
+Setelah model trained, integrate ke Flask API:
+
+1. Model otomatis available di `models/trained/`
+2. Flask app akan load model via `utils/model_utils.py`
+3. API endpoint `/api/predict` akan menggunakan model ini
+
+## 👥 Contributors
+
+- Ahmad Faris AL Aziz (J0404231081)
+- Bramantyo Wicaksono (J0404231053)
+- M Faza Elrahman (J0404231155)
+
+## 📚 References
+
+- Random Forest: https://scikit-learn.org/stable/modules/ensemble.html#forest
+- Water Quality Standards for Tilapia
+- IoT Sensor Calibration Guidelines

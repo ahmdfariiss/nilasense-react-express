@@ -1,5 +1,6 @@
 // Import library yang dibutuhkan
 require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 
@@ -12,6 +13,7 @@ const monitoringRoutes = require("./routes/monitoringRoutes");
 const feedRoutes = require("./routes/feedRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 const app = express();
 // Ganti port kembali ke 5001 jika perlu
@@ -30,6 +32,7 @@ app.use("/api/monitoring", monitoringRoutes);
 app.use("/api/feeds", feedRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // Endpoint (rute) pengujian sederhana
 app.get("/", (req, res) => {

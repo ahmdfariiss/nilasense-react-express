@@ -105,7 +105,30 @@ exports.createOrder = async (req, res) => {
     // Generate order number
     const order_number = await generateOrderNumber(client);
 
-    // Create order with paid status (since we use manual payment confirmation)
+    // Determine order status based on payment method
+    const finalPaymentMethod = payment_method || "manual_transfer";
+    let orderStatus = "pending";
+    let paymentStatus = "unpaid";
+    let paymentGateway = "manual";
+
+    // If Midtrans, order should be pending until payment is confirmed
+    if (finalPaymentMethod === "midtrans") {
+      orderStatus = "pending";
+      paymentStatus = "unpaid";
+      paymentGateway = "midtrans";
+    } else if (finalPaymentMethod === "cash_on_delivery") {
+      // COD - pending until delivered
+      orderStatus = "pending";
+      paymentStatus = "unpaid";
+      paymentGateway = "manual";
+    } else {
+      // Manual transfer - set to paid (assuming manual confirmation)
+      orderStatus = "paid";
+      paymentStatus = "paid";
+      paymentGateway = "manual";
+    }
+
+    // Create order
     const orderResult = await client.query(
       `INSERT INTO orders (
         order_number,
@@ -121,8 +144,9 @@ exports.createOrder = async (req, res) => {
         payment_method,
         notes,
         status,
-        payment_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        payment_status,
+        payment_gateway
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING *`,
       [
         order_number,
@@ -135,10 +159,11 @@ exports.createOrder = async (req, res) => {
         subtotal,
         shipping_cost,
         total_amount,
-        payment_method || "manual_transfer",
+        finalPaymentMethod,
         notes,
-        "paid", // Auto set to paid for manual payment
-        "paid", // Payment status also paid
+        orderStatus,
+        paymentStatus,
+        paymentGateway,
       ]
     );
 
@@ -412,18 +437,22 @@ exports.getOrdersForAdmin = async (req, res) => {
 
     if (userRole === "admin") {
       // Admin can see ALL orders (no filtering)
+      // Include first product name and total quantity for dashboard display
       query = `
         SELECT DISTINCT
           o.id,
           o.order_number,
           o.status,
           o.payment_status,
+          o.payment_method,
           o.total_amount,
           o.created_at,
           o.updated_at,
           u.name as buyer_name,
           u.email as buyer_email,
-          COUNT(DISTINCT oi.id) as item_count
+          COUNT(DISTINCT oi.id) as item_count,
+          (SELECT product_name FROM order_items WHERE order_id = o.id LIMIT 1) as first_product_name,
+          (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) as total_quantity
         FROM orders o
         JOIN users u ON o.user_id = u.id
         LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -433,18 +462,22 @@ exports.getOrdersForAdmin = async (req, res) => {
       params = [];
     } else if (userRole === "petambak") {
       // Petambak can only see orders containing products from their assigned pond
+      // Include first product name and total quantity for dashboard display
       query = `
         SELECT DISTINCT
           o.id,
           o.order_number,
           o.status,
           o.payment_status,
+          o.payment_method,
           o.total_amount,
           o.created_at,
           o.updated_at,
           u.name as buyer_name,
           u.email as buyer_email,
-          COUNT(DISTINCT oi.id) as item_count
+          COUNT(DISTINCT oi.id) as item_count,
+          (SELECT product_name FROM order_items WHERE order_id = o.id AND pond_id = $1 LIMIT 1) as first_product_name,
+          (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id AND pond_id = $1) as total_quantity
         FROM orders o
         JOIN users u ON o.user_id = u.id
         JOIN order_items oi ON o.id = oi.order_id

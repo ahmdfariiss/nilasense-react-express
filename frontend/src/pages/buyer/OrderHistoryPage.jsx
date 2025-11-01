@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Footer } from "@/layouts/Footer";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import orderService from "@/services/orderService";
@@ -295,6 +296,7 @@ export function OrderHistoryPage({ onNavigate }) {
           </div>
         )}
       </div>
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

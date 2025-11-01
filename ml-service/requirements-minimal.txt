@@ -1,0 +1,28 @@
+# Minimal requirements untuk menjalankan ML Service
+# Gunakan file ini jika requirements.txt mengalami error
+
+# Flask Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# Machine Learning - Core packages
+scikit-learn>=1.4.0
+pandas>=2.1.0
+numpy>=1.26.0
+
+# Data Validation
+pydantic>=2.5.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# Logging
+python-json-logger>=2.0.0
+
+# Model Persistence
+joblib>=1.3.0
+
+
