@@ -1,4 +1,4 @@
-const db = require("../db");
+const db = require("../config/database");
 
 // Fungsi untuk mendapatkan semua pengguna (Hanya Admin)
 exports.getAllUsers = async (req, res) => {

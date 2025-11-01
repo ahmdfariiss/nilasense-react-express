@@ -1,4 +1,4 @@
-const db = require("../db");
+const db = require("../config/database");
 const midtransClient = require("midtrans-client");
 
 // Function to get Midtrans Snap instance (lazy initialization)

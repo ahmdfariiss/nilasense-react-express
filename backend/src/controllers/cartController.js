@@ -1,4 +1,4 @@
-const db = require("../db");
+const db = require("../config/database");
 
 /**
  * Get cart items for logged-in user

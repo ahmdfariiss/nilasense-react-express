@@ -5,9 +5,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js",
+    "dev": "nodemon server.js",
     "db:setup": "node database/scripts/setupDatabase.js",
     "db:setup-safe": "node database/scripts/setupDatabaseSafe.js",
     "db:seed": "node database/scripts/seedDatabase.js",
+    "db:seed-monitoring": "node database/scripts/seedMonitoringData.js",
     "db:update-feed": "node database/scripts/updateFeedDatabase.js",
     "db:manager": "node database/manager.js",
     "db:status": "node database/manager.js status",
@@ -15,7 +17,6 @@
     "db:create": "createdb nilasense_db",
     "db:drop": "dropdb nilasense_db --if-exists",
     "seed": "npm run db:seed",
-    "seed:monitoring": "node scripts/seedMonitoringData.js",
     "setup": "npm run db:setup",
     "setup-safe": "npm run db:setup-safe",
     "update-feed": "npm run db:update-feed"
