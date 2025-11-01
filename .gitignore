@@ -1,0 +1,28 @@
+# Ignore environment files
+backend/.env
+frontend/.env
+ml-service/.env
+
+# Node.js dependencies
+backend/node_modules/
+frontend/node_modules/
+ml-service/node_modules/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.cache
+
+# Build outputs
+backend/dist/
+frontend/build/
+frontend/.next/
+ml-service/__pycache__/
+ml-service/.venv/
+ml-service/venv/
+
+# OS & editor specific
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
