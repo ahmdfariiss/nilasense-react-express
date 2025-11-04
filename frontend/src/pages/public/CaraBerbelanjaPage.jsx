@@ -160,3 +160,4 @@ export function CaraBerbelanjaPage({ onNavigate }) {
     </motion.div>
   );
 }
+

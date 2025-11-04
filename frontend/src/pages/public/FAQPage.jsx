@@ -253,3 +253,4 @@ export function FAQPage({ onNavigate }) {
     </motion.div>
   );
 }
+

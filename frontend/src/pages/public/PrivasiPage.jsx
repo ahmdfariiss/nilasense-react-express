@@ -171,3 +171,4 @@ export function PrivasiPage({ onNavigate }) {
     </motion.div>
   );
 }
+

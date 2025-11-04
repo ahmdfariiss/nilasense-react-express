@@ -50,3 +50,4 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_expires ON password_reset_tokens(e
 1. Restart backend server
 2. Coba lagi request forgot password
 3. Token akan muncul di console backend (jika email tidak dikonfigurasi)
+

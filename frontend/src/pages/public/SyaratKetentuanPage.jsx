@@ -172,3 +172,4 @@ export function SyaratKetentuanPage({ onNavigate }) {
     </motion.div>
   );
 }
+

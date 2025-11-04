@@ -76,10 +76,33 @@ class WaterQualityModel:
         if self.model is None:
             raise RuntimeError("Model not loaded. Call load_model() first.")
         
-        # Prepare input
-        input_data = np.array([[ph, temperature, turbidity, dissolved_oxygen]])
-        
-        # Scale input
+        # Prepare input respecting the trained feature order from metadata
+        input_features_by_name = {
+            'ph': float(ph),
+            'temperature': float(temperature),
+            'turbidity': float(turbidity),
+            'dissolved_oxygen': float(dissolved_oxygen),
+        }
+
+        # Some notebooks/datasets might use alternate keys; map if present in metadata
+        alias_map = {
+            'pH': 'ph',
+            'temp': 'temperature',
+            'do': 'dissolved_oxygen',
+            'd_o': 'dissolved_oxygen',
+        }
+
+        ordered_values = []
+        feature_names = self.feature_names or ['ph', 'temperature', 'turbidity', 'dissolved_oxygen']
+        for name in feature_names:
+            key = alias_map.get(name, name)
+            if key not in input_features_by_name:
+                raise ValueError(f"Missing required feature '{name}' for prediction input")
+            ordered_values.append(input_features_by_name[key])
+
+        input_data = np.array([ordered_values])
+
+        # Scale input (scaler was fitted using the same feature order as metadata)
         input_scaled = self.scaler.transform(input_data)
         
         # Predict
@@ -257,6 +280,7 @@ def get_model_instance() -> WaterQualityModel:
         _model_instance = WaterQualityModel()
         _model_instance.load_model()
     return _model_instance
+
 
 
 

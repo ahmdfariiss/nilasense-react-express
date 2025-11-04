@@ -137,3 +137,4 @@ Jika tidak mengonfigurasi email, sistem akan berjalan dalam **simulasi mode**:
 - Pastikan PostgreSQL berjalan
 - Pastikan database `nilasense_db` sudah dibuat
 - Cek error message di console
+
