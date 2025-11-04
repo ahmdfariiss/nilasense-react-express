@@ -271,7 +271,11 @@ exports.updateProduct = async (req, res) => {
     const newCategory =
       category !== undefined ? category : currentProduct.category;
     const newImageUrl =
-      image_url !== undefined ? image_url : currentProduct.image_url;
+      image_url !== undefined
+        ? image_url === null || image_url === ""
+          ? null
+          : image_url
+        : currentProduct.image_url;
     const newPondId = pond_id !== undefined ? pond_id : currentProduct.pond_id;
 
     const updatedProduct = await db.query(

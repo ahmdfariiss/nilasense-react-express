@@ -6,11 +6,22 @@ import { toast } from "sonner";
 // Auth pages
 import { LoginPage } from "./pages/auth/LoginPage";
 import { RegisterPage } from "./pages/auth/RegisterPage";
+import { LupaPasswordPage } from "./pages/auth/LupaPasswordPage";
+import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 
 // Public pages
 import { WelcomePage } from "./pages/public/WelcomePage";
 import { ProductsPage } from "./pages/public/ProductsPage";
 import { ProductDetailPage } from "./pages/public/ProductDetailPage";
+import { PusatBantuanPage } from "./pages/public/PusatBantuanPage";
+import { CaraBerbelanjaPage } from "./pages/public/CaraBerbelanjaPage";
+import { PengirimanPengembalianPage } from "./pages/public/PengirimanPengembalianPage";
+import { FAQPage } from "./pages/public/FAQPage";
+import { TentangKamiPage } from "./pages/public/TentangKamiPage";
+import { PrivasiPage } from "./pages/public/PrivasiPage";
+import { SyaratKetentuanPage } from "./pages/public/SyaratKetentuanPage";
+import { KebijakanPengembalianPage } from "./pages/public/KebijakanPengembalianPage";
+import { DisclaimerPage } from "./pages/public/DisclaimerPage";
 
 // Admin pages
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
@@ -221,6 +232,12 @@ export default function App() {
           />
         );
 
+      case "lupa-password":
+        return <LupaPasswordPage onNavigate={handleNavigate} />;
+
+      case "reset-password":
+        return <ResetPasswordPage onNavigate={handleNavigate} />;
+
       case "home":
         return <WelcomePage onNavigate={handleNavigate} userRole={userRole} />;
 
@@ -234,6 +251,36 @@ export default function App() {
             onNavigate={handleNavigate}
           />
         );
+
+      // Footer pages - Customer Support
+      case "pusat-bantuan":
+        return <PusatBantuanPage onNavigate={handleNavigate} />;
+
+      case "cara-berbelanja":
+        return <CaraBerbelanjaPage onNavigate={handleNavigate} />;
+
+      case "pengiriman-pengembalian":
+        return <PengirimanPengembalianPage onNavigate={handleNavigate} />;
+
+      case "faq":
+        return <FAQPage onNavigate={handleNavigate} />;
+
+      // Footer pages - Information & Contact
+      case "tentang-kami":
+        return <TentangKamiPage onNavigate={handleNavigate} />;
+
+      // Footer pages - Legal
+      case "privasi":
+        return <PrivasiPage onNavigate={handleNavigate} />;
+
+      case "syarat-ketentuan":
+        return <SyaratKetentuanPage onNavigate={handleNavigate} />;
+
+      case "kebijakan-pengembalian":
+        return <KebijakanPengembalianPage onNavigate={handleNavigate} />;
+
+      case "disclaimer":
+        return <DisclaimerPage onNavigate={handleNavigate} />;
 
       case "admin-dashboard":
         return <AdminDashboard onNavigate={handleNavigate} />;

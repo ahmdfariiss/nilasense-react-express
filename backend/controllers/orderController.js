@@ -244,6 +244,7 @@ exports.getMyOrders = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // Get orders with first 3 items (for preview images)
     const result = await db.query(
       `SELECT 
         o.id,
@@ -253,7 +254,26 @@ exports.getMyOrders = async (req, res) => {
         o.total_amount,
         o.created_at,
         o.updated_at,
-        COUNT(oi.id) as item_count
+        COUNT(DISTINCT oi.id) as item_count,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', oi2.id,
+                'product_name', oi2.product_name,
+                'product_image', oi2.product_image,
+                'quantity', oi2.quantity
+              ) ORDER BY oi2.id
+            )
+            FROM (
+              SELECT id, product_name, product_image, quantity
+              FROM order_items
+              WHERE order_id = o.id
+              LIMIT 3
+            ) oi2
+          ),
+          '[]'::json
+        ) as items
       FROM orders o
       LEFT JOIN order_items oi ON o.id = oi.order_id
       WHERE o.user_id = $1
@@ -262,7 +282,29 @@ exports.getMyOrders = async (req, res) => {
       [userId]
     );
 
-    res.status(200).json(result.rows);
+    // Transform to ensure items is an array and parse JSON if needed
+    const transformedResult = result.rows.map((order) => {
+      let items = [];
+
+      // Handle JSON string from PostgreSQL
+      if (typeof order.items === "string") {
+        try {
+          items = JSON.parse(order.items);
+        } catch (e) {
+          items = [];
+        }
+      } else if (Array.isArray(order.items)) {
+        items = order.items;
+      }
+
+      return {
+        ...order,
+        items: items,
+        item_count: parseInt(order.item_count) || 0,
+      };
+    });
+
+    res.status(200).json(transformedResult);
   } catch (error) {
     console.error("Error fetching orders:", error.message);
     res.status(500).json({ message: "Terjadi kesalahan pada server" });

@@ -12,6 +12,7 @@ import { ProductCard } from "@/components/common/ProductCard";
 import { Footer } from "@/layouts/Footer";
 import { toast } from "sonner";
 import { getAllProducts } from "@/services/productService";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function ProductsPage({ onNavigate }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -84,20 +85,92 @@ export function ProductsPage({ onNavigate }) {
     return matchesSearch && matchesCategory && matchesPond && matchesLocation;
   });
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const slideDownVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const productCardVariants = {
+    hidden: { opacity: 0, scale: 0.9, y: 20 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut",
+      },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.9,
+      transition: {
+        duration: 0.2,
+      },
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <motion.div
+      className="min-h-screen bg-background"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-foreground mb-2">Pasar Ikan Nila</h1>
-          <p className="text-muted-foreground">
+        <motion.div className="mb-8" variants={itemVariants}>
+          <motion.h1
+            className="text-foreground mb-2"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+          >
+            Pasar Ikan Nila
+          </motion.h1>
+          <motion.p className="text-muted-foreground" variants={itemVariants}>
             Temukan ikan nila berkualitas dengan transparansi data monitoring
             yang lengkap
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Search and Filter */}
-        <div className="mb-8 space-y-4">
+        <motion.div
+          className="mb-8 space-y-4"
+          variants={slideDownVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -169,7 +242,7 @@ export function ProductsPage({ onNavigate }) {
               </SelectContent>
             </Select>
           </div>
-        </div>
+        </motion.div>
 
         {/* Loading State */}
         {loading && (
@@ -199,48 +272,126 @@ export function ProductsPage({ onNavigate }) {
         )}
 
         {/* Products Grid */}
-        {!loading && !error && filteredProducts.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onNavigate={onNavigate}
-              />
-            ))}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {!loading && !error && filteredProducts.length > 0 && (
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              key="products-grid"
+            >
+              {filteredProducts.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  variants={productCardVariants}
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  whileHover={{
+                    y: -5,
+                    transition: { duration: 0.2 },
+                  }}
+                  layout
+                >
+                  <ProductCard product={product} onNavigate={onNavigate} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Empty State - No Results */}
-        {!loading &&
-          !error &&
-          filteredProducts.length === 0 &&
-          products.length > 0 && (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="w-10 h-10 text-muted-foreground" />
-              </div>
-              <h3 className="text-foreground mb-2">Produk tidak ditemukan</h3>
-              <p className="text-muted-foreground">
-                Coba ubah kata kunci pencarian atau filter yang dipilih
-              </p>
-            </div>
-          )}
+        <AnimatePresence>
+          {!loading &&
+            !error &&
+            filteredProducts.length === 0 &&
+            products.length > 0 && (
+              <motion.div
+                className="text-center py-12"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+              >
+                <motion.div
+                  className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4"
+                  animate={{
+                    rotate: [0, -10, 10, -10, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 3,
+                  }}
+                >
+                  <Search className="w-10 h-10 text-muted-foreground" />
+                </motion.div>
+                <motion.h3
+                  className="text-foreground mb-2"
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  Produk tidak ditemukan
+                </motion.h3>
+                <motion.p
+                  className="text-muted-foreground"
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  Coba ubah kata kunci pencarian atau filter yang dipilih
+                </motion.p>
+              </motion.div>
+            )}
+        </AnimatePresence>
 
         {/* Empty State - No Products */}
-        {!loading && !error && products.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-4xl">📦</span>
-            </div>
-            <h3 className="text-foreground mb-2">Belum Ada Produk</h3>
-            <p className="text-muted-foreground">
-              Produk akan ditampilkan di sini setelah ditambahkan
-            </p>
-          </div>
-        )}
+        <AnimatePresence>
+          {!loading && !error && products.length === 0 && (
+            <motion.div
+              className="text-center py-12"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div
+                className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4"
+                animate={{
+                  y: [0, -10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                <span className="text-4xl">📦</span>
+              </motion.div>
+              <motion.h3
+                className="text-foreground mb-2"
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                Belum Ada Produk
+              </motion.h3>
+              <motion.p
+                className="text-muted-foreground"
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                Produk akan ditampilkan di sini setelah ditambahkan
+              </motion.p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       <Footer onNavigate={onNavigate} />
-    </div>
+    </motion.div>
   );
 }

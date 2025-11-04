@@ -395,15 +395,25 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
   );
 };
 
-// Simple Edit Form for Stock, Price, and Description
+// Simple Edit Form for Stock, Price, Description, Image URL, and Category
 const EditProductDialog = ({ isOpen, onClose, product, onUpdate, loading }) => {
   const [formData, setFormData] = useState({
     price: "",
     stock_kg: "",
     description: "",
+    image_url: "",
+    category: "Ikan Konsumsi",
   });
 
   const [errors, setErrors] = useState({});
+
+  const categories = [
+    "Ikan Konsumsi",
+    "Bibit Ikan",
+    "Ikan Olahan",
+    "Pakan Ikan",
+    "Peralatan",
+  ];
 
   useEffect(() => {
     if (isOpen && product) {
@@ -411,6 +421,8 @@ const EditProductDialog = ({ isOpen, onClose, product, onUpdate, loading }) => {
         price: product.price || "",
         stock_kg: product.stock_kg || product.stock || "",
         description: product.description || "",
+        image_url: product.image_url || "",
+        category: product.category || "Ikan Konsumsi",
       });
       setErrors({});
     }
@@ -442,6 +454,7 @@ const EditProductDialog = ({ isOpen, onClose, product, onUpdate, loading }) => {
     const submitData = {
       price: parseFloat(formData.price),
       stock_kg: parseFloat(formData.stock_kg),
+      category: formData.category,
     };
 
     // Only include description if it has a value or is explicitly cleared
@@ -451,6 +464,15 @@ const EditProductDialog = ({ isOpen, onClose, product, onUpdate, loading }) => {
     } else {
       // If empty, send null to clear the description
       submitData.description = null;
+    }
+
+    // Include image_url if it has a value
+    const trimmedImageUrl = formData.image_url.trim();
+    if (trimmedImageUrl !== "") {
+      submitData.image_url = trimmedImageUrl;
+    } else {
+      // If empty, send null to clear the image_url
+      submitData.image_url = null;
     }
 
     onUpdate(product.id, submitData);
@@ -464,7 +486,8 @@ const EditProductDialog = ({ isOpen, onClose, product, onUpdate, loading }) => {
         <DialogHeader>
           <DialogTitle>Edit Produk: {product.name}</DialogTitle>
           <DialogDescription>
-            Dapat mengubah harga, stok, dan deskripsi produk
+            Dapat mengubah harga, stok, deskripsi, kategori, dan URL gambar
+            produk
           </DialogDescription>
         </DialogHeader>
 
@@ -536,12 +559,56 @@ const EditProductDialog = ({ isOpen, onClose, product, onUpdate, loading }) => {
             </p>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="edit-category">Kategori</Label>
+            <Select
+              name="edit-category"
+              value={formData.category}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, category: value }))
+              }
+            >
+              <SelectTrigger
+                id="edit-category"
+                aria-label="Pilih kategori produk"
+              >
+                <SelectValue placeholder="Pilih kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-image">URL Gambar</Label>
+            <Input
+              id="edit-image"
+              name="edit-image"
+              type="url"
+              autoComplete="url"
+              value={formData.image_url}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  image_url: e.target.value,
+                }))
+              }
+              placeholder="https://example.com/image.jpg"
+            />
+            <p className="text-xs text-muted-foreground">
+              Masukkan URL gambar produk (opsional, kosongkan untuk menghapus
+              gambar)
+            </p>
+          </div>
+
           <div className="bg-muted/50 p-3 rounded-lg">
             <p className="text-sm text-muted-foreground">
               <strong>Produk:</strong> {product.name}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              <strong>Kategori:</strong> {product.category}
             </p>
           </div>
 

@@ -408,7 +408,12 @@ export function OrderManagementPage({ onNavigate }) {
           )}
 
           {/* Order Detail Dialog - 2 COLUMNS */}
-          <Dialog open={isDialogOpen} onOpenChange={() => {}}>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              if (!open) setIsDialogOpen(false);
+            }}
+          >
             <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Detail Pesanan</DialogTitle>

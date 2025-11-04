@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ImageWithFallback } from "@/components/common/ImageWithFallback";
 import {
   Select,
   SelectContent,
@@ -45,6 +46,7 @@ export function OrderHistoryPage({ onNavigate }) {
         payment_status: order.payment_status,
         total_amount: parseFloat(order.total_amount),
         items_count: order.item_count || 0,
+        items: order.items || [], // Preview items with images
         shipping_city: "", // Backend doesn't return city in list, will get from detail
       }));
 
@@ -254,7 +256,7 @@ export function OrderHistoryPage({ onNavigate }) {
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-3">
                         <Package className="w-5 h-5 text-primary" />
                         <h3 className="text-foreground font-semibold">
                           {order.order_number}
@@ -262,12 +264,44 @@ export function OrderHistoryPage({ onNavigate }) {
                         {getStatusBadge(order.status)}
                         {getPaymentBadge(order.payment_status)}
                       </div>
-                      <p className="text-muted-foreground text-sm mb-1">
+                      <p className="text-muted-foreground text-sm mb-2">
                         {formatDate(order.created_at)}
                       </p>
-                      <p className="text-muted-foreground text-sm">
-                        {order.items_count} item
-                      </p>
+
+                      {/* Product Images Preview */}
+                      {order.items && order.items.length > 0 && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex -space-x-2">
+                            {order.items.slice(0, 3).map((item, idx) => (
+                              <div
+                                key={item.id || idx}
+                                className="w-10 h-10 rounded-lg overflow-hidden border-2 border-white bg-muted flex-shrink-0 shadow-sm"
+                                title={item.product_name}
+                              >
+                                <ImageWithFallback
+                                  src={item.product_image}
+                                  alt={item.product_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ))}
+                            {order.items_count > 3 && (
+                              <div className="w-10 h-10 rounded-lg border-2 border-white bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground flex-shrink-0 shadow-sm">
+                                +{order.items_count - 3}
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-muted-foreground text-sm">
+                            {order.items_count} item
+                          </p>
+                        </div>
+                      )}
+
+                      {(!order.items || order.items.length === 0) && (
+                        <p className="text-muted-foreground text-sm">
+                          {order.items_count} item
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-4">

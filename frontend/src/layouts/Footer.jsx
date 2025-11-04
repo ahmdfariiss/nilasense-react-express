@@ -80,24 +80,6 @@ export function Footer({ onNavigate }) {
                   <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </li>
-              <li>
-                <a
-                  href="#"
-                  className="hover:text-white transition-colors flex items-center gap-2 group"
-                >
-                  <span>Monitoring Kualitas Air</span>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="hover:text-white transition-colors flex items-center gap-2 group"
-                >
-                  <span>Sistem Pakan Otomatis</span>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-              </li>
             </ul>
           </div>
 
@@ -109,29 +91,51 @@ export function Footer({ onNavigate }) {
             </h4>
             <ul className="space-y-2 text-white/70">
               <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Pusat Bantuan
-                </a>
+                <button
+                  onClick={() => onNavigate && onNavigate("pusat-bantuan")}
+                  className="hover:text-white transition-colors flex items-center gap-2 group"
+                >
+                  <span>Pusat Bantuan</span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Cara Berbelanja
-                </a>
+                <button
+                  onClick={() => onNavigate && onNavigate("cara-berbelanja")}
+                  className="hover:text-white transition-colors flex items-center gap-2 group"
+                >
+                  <span>Cara Berbelanja</span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Pengiriman & Pengembalian
-                </a>
+                <button
+                  onClick={() =>
+                    onNavigate && onNavigate("pengiriman-pengembalian")
+                  }
+                  className="hover:text-white transition-colors flex items-center gap-2 group"
+                >
+                  <span>Pengiriman & Pengembalian</span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  FAQ
-                </a>
+                <button
+                  onClick={() => onNavigate && onNavigate("faq")}
+                  className="hover:text-white transition-colors flex items-center gap-2 group"
+                >
+                  <span>FAQ</span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Status Pesanan
-                </a>
+                <button
+                  onClick={() => onNavigate && onNavigate("order-history")}
+                  className="hover:text-white transition-colors flex items-center gap-2 group"
+                >
+                  <span>Status Pesanan</span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
               </li>
             </ul>
           </div>
@@ -144,19 +148,13 @@ export function Footer({ onNavigate }) {
             </h4>
             <ul className="space-y-3 text-white/70">
               <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Tentang Kami
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Blog & Artikel
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Karir
-                </a>
+                <button
+                  onClick={() => onNavigate && onNavigate("tentang-kami")}
+                  className="hover:text-white transition-colors flex items-center gap-2 group"
+                >
+                  <span>Tentang Kami</span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
               </li>
               <li className="pt-2 space-y-2">
                 <div className="flex items-center gap-2">
@@ -193,30 +191,32 @@ export function Footer({ onNavigate }) {
               <p>&copy; 2025 NilaSense. All rights reserved.</p>
             </div>
             <div className="flex flex-wrap gap-6 text-sm">
-              <a
-                href="#"
+              <button
+                onClick={() => onNavigate && onNavigate("privasi")}
                 className="text-white/70 hover:text-white transition-colors"
               >
                 Privasi
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                onClick={() => onNavigate && onNavigate("syarat-ketentuan")}
                 className="text-white/70 hover:text-white transition-colors"
               >
                 Syarat & Ketentuan
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                onClick={() =>
+                  onNavigate && onNavigate("kebijakan-pengembalian")
+                }
                 className="text-white/70 hover:text-white transition-colors"
               >
                 Kebijakan Pengembalian
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                onClick={() => onNavigate && onNavigate("disclaimer")}
                 className="text-white/70 hover:text-white transition-colors"
               >
                 Disclaimer
-              </a>
+              </button>
             </div>
           </div>
 

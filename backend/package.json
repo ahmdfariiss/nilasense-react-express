@@ -1,4 +1,4 @@
-  {
+{
   "name": "backend",
   "version": "1.0.0",
   "main": "index.js",
@@ -33,6 +33,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "midtrans-client": "^1.4.3",
+    "nodemailer": "^7.0.10",
     "pg": "^8.16.3"
   },
   "devDependencies": {

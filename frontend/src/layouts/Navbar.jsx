@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu,
   X,
@@ -251,8 +252,51 @@ export function Navbar({
     }
   };
 
+  // Animation variants for navbar
+  const navbarVariants = {
+    hidden: { y: -100, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  // Animation variants for nav links
+  const navLinkVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.3,
+        ease: "easeOut",
+      },
+    }),
+  };
+
+  // Animation variants for logo
+  const logoVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut",
+      },
+    },
+  };
+
   return (
-    <nav
+    <motion.nav
+      initial="hidden"
+      animate="visible"
+      variants={navbarVariants}
       className={`sticky top-0 z-50 border-b border-border transition-all duration-300 ${
         isScrolled
           ? "bg-white/98 backdrop-blur-3xl backdrop-saturate-200 shadow-lg"
@@ -270,30 +314,42 @@ export function Navbar({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div
+          <motion.div
+            variants={logoVariants}
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => onNavigate("home")}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ duration: 0.2 }}
           >
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
+            <motion.div
+              className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden"
+              whileHover={{ rotate: 5 }}
+              transition={{ duration: 0.3 }}
+            >
               <img
                 src="https://i.pinimg.com/originals/67/8d/2d/678d2d9fbfa87a9dd39466f35d349835.png"
                 alt="NilaSense Logo"
                 className="w-full h-full object-cover"
               />
-            </div>
+            </motion.div>
             <span
               className="text-primary tracking-tight"
               style={{ fontSize: "1.375rem", fontWeight: 700 }}
             >
               NilaSense
             </span>
-          </div>
+          </motion.div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            {visibleLinks.map((link) => (
-              <button
+            {visibleLinks.map((link, index) => (
+              <motion.button
                 key={link.page}
+                custom={index}
+                variants={navLinkVariants}
+                initial="hidden"
+                animate="visible"
                 onClick={() => onNavigate(link.page)}
                 className={`transition-colors ${
                   currentPage === link.page
@@ -304,9 +360,11 @@ export function Navbar({
                     ? "px-4 py-2 bg-primary/10 rounded-lg text-primary hover:bg-primary/20"
                     : ""
                 }`}
+                whileHover={{ y: -2 }}
+                whileTap={{ y: 0 }}
               >
                 {link.name}
-              </button>
+              </motion.button>
             ))}
 
             {/* Admin Dashboard Dropdown for Admin/Petambak */}
@@ -428,20 +486,46 @@ export function Navbar({
 
             {/* Cart Icon for Buyers */}
             {userRole === "buyer" && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                onClick={() => onNavigate("cart")}
-                aria-label="Keranjang belanja"
+              <motion.div
+                variants={navLinkVariants}
+                custom={visibleLinks.length}
+                initial="hidden"
+                animate="visible"
               >
-                <ShoppingCart className="w-5 h-5" />
-                {cartCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary">
-                    {cartCount}
-                  </Badge>
-                )}
-              </Button>
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative"
+                    onClick={() => onNavigate("cart")}
+                    aria-label="Keranjang belanja"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    <AnimatePresence>
+                      {cartCount > 0 && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 30,
+                          }}
+                        >
+                          <Badge className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs bg-primary text-white rounded-full shadow-lg">
+                            {cartCount > 99 ? "99+" : cartCount}
+                          </Badge>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Button>
+                </motion.div>
+              </motion.div>
             )}
 
             {/* Auth Buttons for Guest */}
@@ -628,6 +712,6 @@ export function Navbar({
           </div>
         )}
       </div>
-    </nav>
+    </motion.nav>
   );
 }
