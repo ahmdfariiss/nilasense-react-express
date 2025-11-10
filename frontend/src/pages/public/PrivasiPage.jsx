@@ -172,3 +172,15 @@ export function PrivasiPage({ onNavigate }) {
   );
 }
 
+
+
+
+
+
+
+
+
+
+
+
+

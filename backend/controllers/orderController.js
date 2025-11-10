@@ -245,6 +245,7 @@ exports.getMyOrders = async (req, res) => {
     const userId = req.user.id;
 
     // Get orders with first 3 items (for preview images)
+    // Include admin_notes so buyers can see admin/petambak notes
     const result = await db.query(
       `SELECT 
         o.id,
@@ -254,6 +255,7 @@ exports.getMyOrders = async (req, res) => {
         o.total_amount,
         o.created_at,
         o.updated_at,
+        o.admin_notes,
         COUNT(DISTINCT oi.id) as item_count,
         COALESCE(
           (
@@ -277,7 +279,7 @@ exports.getMyOrders = async (req, res) => {
       FROM orders o
       LEFT JOIN order_items oi ON o.id = oi.order_id
       WHERE o.user_id = $1
-      GROUP BY o.id
+      GROUP BY o.id, o.order_number, o.status, o.payment_status, o.total_amount, o.created_at, o.updated_at, o.admin_notes
       ORDER BY o.created_at DESC`,
       [userId]
     );
@@ -556,6 +558,14 @@ exports.updateOrderStatus = async (req, res) => {
     const { orderId } = req.params;
     const { status, admin_notes } = req.body;
 
+    console.log("=== UPDATE ORDER STATUS REQUEST ===");
+    console.log("Order ID:", orderId);
+    console.log("Status:", status);
+    console.log("Admin Notes (raw):", admin_notes);
+    console.log("Admin Notes (type):", typeof admin_notes);
+    console.log("User ID:", userId);
+    console.log("User Role:", userRole);
+
     // Convert orderId to integer (from URL params string)
     const orderIdInt = parseInt(orderId, 10);
 
@@ -621,6 +631,21 @@ exports.updateOrderStatus = async (req, res) => {
       : "unpaid";
 
     // Update order - set paid_at if status is 'paid' and not already set
+    // Handle admin_notes: trim and convert empty strings to null
+    let adminNotesValue = null;
+    if (admin_notes !== undefined && admin_notes !== null) {
+      const trimmedNotes = String(admin_notes).trim();
+      adminNotesValue = trimmedNotes.length > 0 ? trimmedNotes : null;
+    }
+
+    console.log("Updating order:", {
+      orderId: orderIdInt,
+      status,
+      paymentStatus,
+      admin_notes: admin_notes,
+      adminNotesValue: adminNotesValue,
+    });
+
     const updateResult = await db.query(
       `UPDATE orders 
       SET status = $1::order_status, 
@@ -633,8 +658,19 @@ exports.updateOrderStatus = async (req, res) => {
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $4 
       RETURNING *`,
-      [status, paymentStatus, admin_notes || null, orderIdInt]
+      [status, paymentStatus, adminNotesValue, orderIdInt]
     );
+
+    console.log("Update result:", {
+      rowsAffected: updateResult.rows.length,
+      updatedOrder: updateResult.rows[0]
+        ? {
+            id: updateResult.rows[0].id,
+            status: updateResult.rows[0].status,
+            admin_notes: updateResult.rows[0].admin_notes,
+          }
+        : null,
+    });
 
     if (updateResult.rows.length === 0) {
       return res.status(404).json({

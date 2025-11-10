@@ -47,6 +47,7 @@ export function OrderHistoryPage({ onNavigate }) {
         total_amount: parseFloat(order.total_amount),
         items_count: order.item_count || 0,
         items: order.items || [], // Preview items with images
+        admin_notes: order.admin_notes || null, // Admin notes for buyer
         shipping_city: "", // Backend doesn't return city in list, will get from detail
       }));
 
@@ -301,6 +302,16 @@ export function OrderHistoryPage({ onNavigate }) {
                         <p className="text-muted-foreground text-sm">
                           {order.items_count} item
                         </p>
+                      )}
+                      {order.admin_notes && (
+                        <div className="mt-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2">
+                          <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-1">
+                            Catatan Admin:
+                          </p>
+                          <p className="text-xs text-blue-800 dark:text-blue-200 line-clamp-2">
+                            {order.admin_notes}
+                          </p>
+                        </div>
                       )}
                     </div>
 

@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   getAllProducts,
+  getMyProducts,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -654,7 +655,9 @@ export function ProductManagementPage({ onNavigate }) {
   const fetchProducts = async () => {
     try {
       setRefreshing(true);
-      const result = await getAllProducts();
+      // Use getMyProducts() instead of getAllProducts() to filter by role
+      // Admin will see all products, petambak will only see products from their pond
+      const result = await getMyProducts();
 
       if (result.success) {
         setProducts(result.data);

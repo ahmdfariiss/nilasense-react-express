@@ -93,7 +93,7 @@ exports.getMyProducts = async (req, res) => {
     let params;
 
     if (userRole === "admin") {
-      // Admin: get all products they created
+      // Admin: get ALL products (can see everything)
       query = `
         SELECT 
           p.*,
@@ -101,10 +101,9 @@ exports.getMyProducts = async (req, res) => {
           ponds.location as pond_location
         FROM products p
         LEFT JOIN ponds ON p.pond_id = ponds.id
-        WHERE p.user_id = $1 
         ORDER BY p.created_at DESC
       `;
-      params = [userId];
+      params = [];
     } else if (userRole === "petambak") {
       // Petambak: get only products for their assigned pond
       if (!userPondId) {
@@ -221,8 +220,6 @@ exports.updateProduct = async (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.role;
     const userPondId = req.user.pond_id;
-    const { name, description, price, stock_kg, category, image_url, pond_id } =
-      req.body;
 
     // Cek dulu apakah produknya ada
     const productExist = await db.query(
@@ -234,6 +231,8 @@ exports.updateProduct = async (req, res) => {
     }
 
     const currentProduct = productExist.rows[0];
+    const { name, description, price, stock_kg, category, image_url, pond_id } =
+      req.body;
 
     // Validate access for petambak
     if (userRole === "petambak") {

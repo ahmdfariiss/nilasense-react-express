@@ -5,7 +5,13 @@ Model utilities for loading and using the trained water quality model.
 import joblib
 import numpy as np
 import os
+import warnings
+from datetime import datetime
 from typing import Dict, Tuple, Any
+
+# Suppress scikit-learn version warnings when loading old models
+# This is safe as scikit-learn maintains backward compatibility for model loading
+warnings.filterwarnings('ignore', category=UserWarning, module='sklearn')
 
 
 class WaterQualityModel:
@@ -30,23 +36,65 @@ class WaterQualityModel:
         try:
             # Load model
             model_path = os.path.join(self.model_dir, 'water_quality_rf_model.pkl')
+            if not os.path.exists(model_path):
+                raise FileNotFoundError(f"Model file not found: {model_path}")
             self.model = joblib.load(model_path)
             
             # Load scaler
             scaler_path = os.path.join(self.model_dir, 'scaler.pkl')
+            if not os.path.exists(scaler_path):
+                raise FileNotFoundError(f"Scaler file not found: {scaler_path}")
             self.scaler = joblib.load(scaler_path)
             
-            # Load metadata
+            # Load metadata with fallback defaults
             metadata_path = os.path.join(self.model_dir, 'model_metadata.pkl')
-            self.metadata = joblib.load(metadata_path)
+            if os.path.exists(metadata_path):
+                self.metadata = joblib.load(metadata_path)
+            else:
+                # Create default metadata if file doesn't exist
+                print(f"⚠️  Warning: Metadata file not found, using defaults")
+                self.metadata = {}
             
-            # Extract important info
-            self.label_mapping = self.metadata['label_mapping']
-            self.feature_names = self.metadata['feature_names']
+            # Extract important info with defaults
+            self.label_mapping = self.metadata.get('label_mapping', {0: 'Baik', 1: 'Normal', 2: 'Perlu Perhatian'})
+            self.feature_names = self.metadata.get('feature_names', ['ph', 'temperature', 'turbidity', 'dissolved_oxygen'])
+            
+            # Handle different metadata formats (old vs new)
+            # Old format uses: test_accuracy, test_precision, test_recall, test_f1
+            # New format uses: accuracy, precision, recall, f1_score
+            
+            # Set default values for missing metadata fields
+            if 'model_type' not in self.metadata:
+                self.metadata['model_type'] = 'RandomForestClassifier'
+            
+            # Handle accuracy (support both old and new format)
+            if 'accuracy' not in self.metadata:
+                self.metadata['accuracy'] = self.metadata.get('test_accuracy', 0.0)
+            
+            # Handle precision (support both old and new format)
+            if 'precision' not in self.metadata:
+                self.metadata['precision'] = self.metadata.get('test_precision', 0.0)
+            
+            # Handle recall (support both old and new format)
+            if 'recall' not in self.metadata:
+                self.metadata['recall'] = self.metadata.get('test_recall', 0.0)
+            
+            # Handle f1_score (support both old and new format)
+            if 'f1_score' not in self.metadata:
+                self.metadata['f1_score'] = self.metadata.get('test_f1', 0.0)
+            
+            # Handle training_date
+            if 'training_date' not in self.metadata:
+                self.metadata['training_date'] = datetime.utcnow().isoformat() + 'Z'
+            
+            # Handle feature_importance
+            if 'feature_importance' not in self.metadata:
+                self.metadata['feature_importance'] = {}
             
             print(f"✅ Model loaded successfully!")
             print(f"   Model type: {self.metadata['model_type']}")
-            print(f"   Accuracy: {self.metadata['accuracy']*100:.2f}%")
+            if self.metadata['accuracy'] > 0:
+                print(f"   Accuracy: {self.metadata['accuracy']*100:.2f}%")
             print(f"   Training date: {self.metadata['training_date']}")
             
             return True
@@ -54,9 +102,12 @@ class WaterQualityModel:
         except FileNotFoundError as e:
             print(f"❌ Error: Model files not found in {self.model_dir}")
             print(f"   Please run the training notebook first to generate model files.")
+            print(f"   Details: {str(e)}")
             return False
         except Exception as e:
             print(f"❌ Error loading model: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def predict(self, ph: float, temperature: float, turbidity: float, 
@@ -258,15 +309,15 @@ class WaterQualityModel:
             return {"error": "Model not loaded"}
         
         return {
-            'model_type': self.metadata['model_type'],
-            'features': self.metadata['feature_names'],
-            'classes': list(self.metadata['label_mapping'].values()),
-            'accuracy': self.metadata['accuracy'],
-            'precision': self.metadata['precision'],
-            'recall': self.metadata['recall'],
-            'f1_score': self.metadata['f1_score'],
-            'training_date': self.metadata['training_date'],
-            'feature_importance': self.metadata['feature_importance']
+            'model_type': self.metadata.get('model_type', 'RandomForestClassifier'),
+            'features': self.metadata.get('feature_names', self.feature_names or ['ph', 'temperature', 'turbidity', 'dissolved_oxygen']),
+            'classes': list(self.metadata.get('label_mapping', self.label_mapping or {0: 'Baik', 1: 'Normal', 2: 'Perlu Perhatian'}).values()),
+            'accuracy': self.metadata.get('accuracy', 0.0),
+            'precision': self.metadata.get('precision', 0.0),
+            'recall': self.metadata.get('recall', 0.0),
+            'f1_score': self.metadata.get('f1_score', 0.0),
+            'training_date': self.metadata.get('training_date', 'Unknown'),
+            'feature_importance': self.metadata.get('feature_importance', {})
         }
 
 

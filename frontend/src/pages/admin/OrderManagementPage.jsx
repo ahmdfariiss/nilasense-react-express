@@ -113,32 +113,135 @@ export function OrderManagementPage({ onNavigate }) {
     }
   };
 
-  const handleUpdateStatus = async () => {
+  const handleUpdateStatus = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     if (!newStatus) {
       toast.error("Status harus dipilih");
       return;
     }
 
+    if (!selectedOrder || !selectedOrder.id) {
+      toast.error("Pesanan tidak ditemukan");
+      return;
+    }
+
     setUpdating(true);
+
     try {
-      const result = await orderService.updateOrderStatus(selectedOrder.id, {
+      console.log("Updating order status:", {
+        orderId: selectedOrder.id,
         status: newStatus,
         admin_notes: adminNotes,
       });
 
-      toast.success("Status pesanan berhasil diperbarui");
+      const result = await orderService.updateOrderStatus(selectedOrder.id, {
+        status: newStatus,
+        admin_notes: adminNotes || "",
+      });
 
-      // Close modal first
-      setIsDialogOpen(false);
-      setSelectedOrder(null);
+      console.log("Update result:", result);
 
-      // Refresh the entire order list to get latest data
-      await fetchOrders();
+      // Check if result is successful
+      if (result && result.success !== false) {
+        // Verify the response contains updated order data
+        const updatedOrder = result.data?.order || result.data;
+        console.log("=== UPDATE SUCCESS ===");
+        console.log("Response data:", result.data);
+        console.log("Updated order:", updatedOrder);
+        console.log("Admin notes in response:", updatedOrder?.admin_notes);
+
+        // Show success toast
+        toast.success("Status pesanan berhasil diperbarui", {
+          description: adminNotes
+            ? "Catatan admin telah tersimpan"
+            : "Status pesanan telah diperbarui",
+          duration: 3000,
+        });
+
+        // Refresh the order list first
+        await fetchOrders();
+
+        // If modal is still open, refresh the selected order detail to show updated admin_notes
+        if (selectedOrder && selectedOrder.id) {
+          try {
+            console.log(
+              "Refreshing order detail for order ID:",
+              selectedOrder.id
+            );
+            const refreshedResult = await orderService.getOrderById(
+              selectedOrder.id
+            );
+            if (refreshedResult.success) {
+              const refreshedOrder = {
+                id: refreshedResult.data.id,
+                order_number: refreshedResult.data.order_number,
+                created_at: refreshedResult.data.created_at,
+                status: refreshedResult.data.status,
+                payment_status: refreshedResult.data.payment_status,
+                payment_method: refreshedResult.data.payment_method,
+                total_amount: parseFloat(refreshedResult.data.total_amount),
+                subtotal: parseFloat(refreshedResult.data.subtotal),
+                shipping_cost: parseFloat(refreshedResult.data.shipping_cost),
+                shipping_name: refreshedResult.data.shipping_name,
+                shipping_phone: refreshedResult.data.shipping_phone,
+                shipping_address: refreshedResult.data.shipping_address,
+                shipping_city: refreshedResult.data.shipping_city,
+                shipping_postal_code: refreshedResult.data.shipping_postal_code,
+                notes: refreshedResult.data.notes,
+                admin_notes: refreshedResult.data.admin_notes,
+                items: refreshedResult.data.items.map((item) => ({
+                  id: item.id,
+                  product_name: item.product_name,
+                  product_price: parseFloat(item.product_price),
+                  quantity: item.quantity,
+                  subtotal: parseFloat(item.subtotal),
+                })),
+              };
+
+              console.log(
+                "Refreshed order admin_notes:",
+                refreshedOrder.admin_notes
+              );
+              setSelectedOrder(refreshedOrder);
+              setAdminNotes(refreshedOrder.admin_notes || "");
+              setNewStatus(refreshedOrder.status);
+            }
+          } catch (refreshError) {
+            console.error("Error refreshing order detail:", refreshError);
+          }
+        }
+
+        // Wait a moment for toast to appear, then close modal
+        setTimeout(() => {
+          if (!updating) {
+            setIsDialogOpen(false);
+            setSelectedOrder(null);
+            setAdminNotes("");
+            setNewStatus("");
+          }
+        }, 1000);
+      } else {
+        throw new Error(result?.error || "Gagal memperbarui status pesanan");
+      }
     } catch (error) {
       console.error("Error updating order status:", error);
-      toast.error("Gagal memperbarui status pesanan", {
-        description: error.message || "Terjadi kesalahan pada server",
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
       });
+
+      // Show error toast - keep modal open so user can retry
+      toast.error("Gagal memperbarui status pesanan", {
+        description:
+          error.message || "Terjadi kesalahan pada server. Silakan coba lagi.",
+        duration: 5000,
+      });
+
+      // Don't close modal on error
     } finally {
       setUpdating(false);
     }
@@ -411,10 +514,31 @@ export function OrderManagementPage({ onNavigate }) {
           <Dialog
             open={isDialogOpen}
             onOpenChange={(open) => {
-              if (!open) setIsDialogOpen(false);
+              // Only prevent closing if updating
+              if (!open && updating) {
+                // Prevent closing during update
+                return;
+              }
+              // Allow closing via close button or backdrop click
+              if (!open) {
+                setIsDialogOpen(false);
+                setSelectedOrder(null);
+                setAdminNotes("");
+                setNewStatus("");
+              }
             }}
           >
-            <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+            <DialogContent
+              className="max-w-5xl max-h-[85vh] overflow-y-auto"
+              onInteractOutside={(e) => {
+                // Prevent closing when updating
+                // onInteractOutside is only called when clicking outside dialog content
+                if (updating) {
+                  e.preventDefault();
+                }
+                // Otherwise, allow closing by clicking on backdrop
+              }}
+            >
               <DialogHeader>
                 <DialogTitle>Detail Pesanan</DialogTitle>
                 <DialogDescription>
@@ -423,7 +547,17 @@ export function OrderManagementPage({ onNavigate }) {
               </DialogHeader>
 
               {selectedOrder && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+                <div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2"
+                  onClick={(e) => {
+                    // Stop propagation to prevent dialog from closing when clicking inside
+                    e.stopPropagation();
+                  }}
+                  onMouseDown={(e) => {
+                    // Stop propagation to prevent dialog from closing when clicking inside
+                    e.stopPropagation();
+                  }}
+                >
                   {/* LEFT COLUMN */}
                   <div className="space-y-3">
                     {/* Order Info */}
@@ -593,11 +727,16 @@ export function OrderManagementPage({ onNavigate }) {
                             name="admin-notes"
                             value={adminNotes}
                             onChange={(e) => setAdminNotes(e.target.value)}
-                            placeholder="Catatan opsional..."
+                            placeholder="Catatan opsional untuk pembeli..."
                           />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Catatan ini akan terlihat oleh pembeli di halaman
+                            riwayat pesanan mereka.
+                          </p>
                         </div>
                         <div className="flex gap-2 pt-1">
                           <Button
+                            type="button"
                             onClick={handleUpdateStatus}
                             disabled={updating}
                             className="flex-1"
@@ -605,8 +744,13 @@ export function OrderManagementPage({ onNavigate }) {
                             {updating ? "Menyimpan..." : "Simpan"}
                           </Button>
                           <Button
+                            type="button"
                             variant="outline"
-                            onClick={() => setIsDialogOpen(false)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setIsDialogOpen(false);
+                            }}
                             disabled={updating}
                           >
                             Tutup

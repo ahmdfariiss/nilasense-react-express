@@ -557,9 +557,22 @@ export function OrderDetailPage({ orderId, onNavigate }) {
                       <Separator className="my-3" />
                       <div>
                         <p className="text-sm text-muted-foreground mb-1">
-                          Catatan:
+                          Catatan Pembeli:
                         </p>
                         <p className="text-foreground">{order.notes}</p>
+                      </div>
+                    </>
+                  )}
+                  {order.admin_notes && (
+                    <>
+                      <Separator className="my-3" />
+                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                          Catatan dari Admin:
+                        </p>
+                        <p className="text-blue-800 dark:text-blue-200">
+                          {order.admin_notes}
+                        </p>
                       </div>
                     </>
                   )}

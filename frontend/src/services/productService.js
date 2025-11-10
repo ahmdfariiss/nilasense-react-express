@@ -91,3 +91,20 @@ export const deleteProduct = async (id) => {
     };
   }
 };
+
+// Get my products (for admin: all products, for petambak: only products from their pond)
+export const getMyProducts = async () => {
+  try {
+    const response = await api.get("/products/my/products");
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    console.error("Error fetching my products:", error);
+    return {
+      success: false,
+      error: error.response?.data?.message || "Gagal mengambil data produk",
+    };
+  }
+};

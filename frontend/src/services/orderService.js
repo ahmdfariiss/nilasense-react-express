@@ -98,13 +98,23 @@ export const getOrdersForAdmin = async () => {
  */
 export const updateOrderStatus = async (orderId, data) => {
   try {
+    console.log("Sending update request:", { orderId, data });
     const response = await api.put(`/orders/${orderId}/status`, data);
+    console.log("Update response:", response.data);
+
+    if (response.data && response.data.message) {
+      return { success: true, data: response.data };
+    }
+
     return { success: true, data: response.data };
   } catch (error) {
     console.error("Error updating order status:", error);
-    throw new Error(
-      error.response?.data?.message || "Gagal memperbarui status pesanan"
-    );
+    console.error("Error response:", error.response?.data);
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal memperbarui status pesanan";
+    throw new Error(errorMessage);
   }
 };
 
