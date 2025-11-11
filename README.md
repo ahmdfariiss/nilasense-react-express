@@ -441,9 +441,7 @@ npm run db:status
 
 ## 👥 Tim Pengembang
 
-- **Ahmad Faris AL Aziz** (J0404231081)
-- **Bramantyo Wicaksono** (J0404231053)
-- **M Faza Elrahman** (J0404231155)
+**Ahmad Faris AL Aziz** (J0404231081)
 
 ## 📝 License
 
