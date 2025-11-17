@@ -511,34 +511,8 @@ export function OrderManagementPage({ onNavigate }) {
           )}
 
           {/* Order Detail Dialog - 2 COLUMNS */}
-          <Dialog
-            open={isDialogOpen}
-            onOpenChange={(open) => {
-              // Only prevent closing if updating
-              if (!open && updating) {
-                // Prevent closing during update
-                return;
-              }
-              // Allow closing via close button or backdrop click
-              if (!open) {
-                setIsDialogOpen(false);
-                setSelectedOrder(null);
-                setAdminNotes("");
-                setNewStatus("");
-              }
-            }}
-          >
-            <DialogContent
-              className="max-w-5xl max-h-[85vh] overflow-y-auto"
-              onInteractOutside={(e) => {
-                // Prevent closing when updating
-                // onInteractOutside is only called when clicking outside dialog content
-                if (updating) {
-                  e.preventDefault();
-                }
-                // Otherwise, allow closing by clicking on backdrop
-              }}
-            >
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Detail Pesanan</DialogTitle>
                 <DialogDescription>
@@ -547,17 +521,7 @@ export function OrderManagementPage({ onNavigate }) {
               </DialogHeader>
 
               {selectedOrder && (
-                <div
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2"
-                  onClick={(e) => {
-                    // Stop propagation to prevent dialog from closing when clicking inside
-                    e.stopPropagation();
-                  }}
-                  onMouseDown={(e) => {
-                    // Stop propagation to prevent dialog from closing when clicking inside
-                    e.stopPropagation();
-                  }}
-                >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
                   {/* LEFT COLUMN */}
                   <div className="space-y-3">
                     {/* Order Info */}
@@ -736,7 +700,6 @@ export function OrderManagementPage({ onNavigate }) {
                         </div>
                         <div className="flex gap-2 pt-1">
                           <Button
-                            type="button"
                             onClick={handleUpdateStatus}
                             disabled={updating}
                             className="flex-1"
@@ -744,13 +707,8 @@ export function OrderManagementPage({ onNavigate }) {
                             {updating ? "Menyimpan..." : "Simpan"}
                           </Button>
                           <Button
-                            type="button"
                             variant="outline"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setIsDialogOpen(false);
-                            }}
+                            onClick={() => setIsDialogOpen(false)}
                             disabled={updating}
                           >
                             Tutup

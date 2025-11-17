@@ -136,6 +136,25 @@ exports.getMyProducts = async (req, res) => {
   }
 };
 
+// Upload image only (standalone endpoint)
+exports.uploadImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Tidak ada file yang diupload" });
+    }
+
+    // Return the uploaded file path
+    const imageUrl = `/uploads/${req.file.filename}`;
+    res.status(200).json({
+      message: "Gambar berhasil diupload",
+      image_url: imageUrl,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+  }
+};
+
 exports.createProduct = async (req, res) => {
   const userId = req.user.id;
   const userRole = req.user.role;
@@ -143,6 +162,12 @@ exports.createProduct = async (req, res) => {
 
   const { name, description, price, stock_kg, category, image_url, pond_id } =
     req.body;
+
+  // Handle uploaded file
+  let finalImageUrl = image_url;
+  if (req.file) {
+    finalImageUrl = `/uploads/${req.file.filename}`;
+  }
 
   // Validasi input dasar
   if (!name || !price || stock_kg === undefined) {
@@ -178,7 +203,7 @@ exports.createProduct = async (req, res) => {
           price,
           stock_kg,
           category || "Ikan Konsumsi",
-          image_url || null,
+          finalImageUrl || null,
           finalPondId,
         ]
       );
@@ -199,7 +224,7 @@ exports.createProduct = async (req, res) => {
         price,
         stock_kg,
         category || "Ikan Konsumsi",
-        image_url || null,
+        finalImageUrl || null,
         pond_id || null,
       ]
     );
@@ -233,6 +258,12 @@ exports.updateProduct = async (req, res) => {
     const currentProduct = productExist.rows[0];
     const { name, description, price, stock_kg, category, image_url, pond_id } =
       req.body;
+
+    // Handle uploaded file
+    let finalImageUrl = image_url;
+    if (req.file) {
+      finalImageUrl = `/uploads/${req.file.filename}`;
+    }
 
     // Validate access for petambak
     if (userRole === "petambak") {
@@ -270,10 +301,10 @@ exports.updateProduct = async (req, res) => {
     const newCategory =
       category !== undefined ? category : currentProduct.category;
     const newImageUrl =
-      image_url !== undefined
-        ? image_url === null || image_url === ""
+      finalImageUrl !== undefined
+        ? finalImageUrl === null || finalImageUrl === ""
           ? null
-          : image_url
+          : finalImageUrl
         : currentProduct.image_url;
     const newPondId = pond_id !== undefined ? pond_id : currentProduct.pond_id;
 

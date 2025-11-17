@@ -7,6 +7,7 @@ const {
   isAdmin,
   isAdminOrPetambak,
 } = require("../middleware/authMiddleware");
+const { uploadSingle } = require("../middleware/uploadMiddleware");
 
 // GET /api/products - Mendapatkan semua produk (dengan optional query ?pond_id=X)
 // Rute ini publik, jadi tidak perlu middleware 'protect' atau 'isAdmin'
@@ -28,11 +29,32 @@ router.get("/pond/:pond_id", productController.getProductsByPond);
 // GET /api/products/:id - Mendapatkan satu produk berdasarkan ID
 router.get("/:id", productController.getProductById);
 
+// POST /api/products/upload-image - Upload gambar produk (Admin & Petambak)
+router.post(
+  "/upload-image",
+  protect,
+  isAdminOrPetambak,
+  uploadSingle,
+  productController.uploadImage
+);
+
 // POST /api/products - Membuat produk baru (Admin & Petambak)
-router.post("/", protect, isAdminOrPetambak, productController.createProduct);
+router.post(
+  "/",
+  protect,
+  isAdminOrPetambak,
+  uploadSingle,
+  productController.createProduct
+);
 
 // PUT /api/products/:id - Memperbarui produk (Admin & Petambak)
-router.put("/:id", protect, isAdminOrPetambak, productController.updateProduct);
+router.put(
+  "/:id",
+  protect,
+  isAdminOrPetambak,
+  uploadSingle,
+  productController.updateProduct
+);
 
 // DELETE /api/products/:id - Menghapus produk (Admin & Petambak)
 router.delete(

@@ -75,6 +75,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
   const [errors, setErrors] = useState({});
   const [ponds, setPonds] = useState([]);
   const [loadingPonds, setLoadingPonds] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Fetch ponds when form opens
   useEffect(() => {
@@ -105,36 +106,40 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
         pond_id: "none",
       });
       setErrors({});
+      setIsInitialized(false);
       return;
     }
 
-    // When modal opens, populate form based on editData
-    if (editData) {
-      setFormData({
-        name: editData.name || "",
-        description: editData.description || "",
-        price: editData.price || "",
-        stock_kg: editData.stock_kg || editData.stock || "",
-        category: editData.category || "Ikan Konsumsi",
-        image_url: editData.image_url || "",
-        pond_id: editData.pond_id ? editData.pond_id.toString() : "none",
-      });
-      setErrors({});
-    } else {
-      // Modal opened for creating new product
-      setFormData({
-        name: "",
-        description: "",
-        price: "",
-        stock_kg: "",
-        category: "Ikan Konsumsi",
-        image_url: "",
-        pond_id: "none",
-      });
-      setErrors({});
+    // Only initialize once when modal opens
+    if (isOpen && !isInitialized) {
+      // When modal opens, populate form based on editData
+      if (editData) {
+        setFormData({
+          name: editData.name || "",
+          description: editData.description || "",
+          price: editData.price || "",
+          stock_kg: editData.stock_kg || editData.stock || "",
+          category: editData.category || "Ikan Konsumsi",
+          image_url: editData.image_url || "",
+          pond_id: editData.pond_id ? editData.pond_id.toString() : "none",
+        });
+        setErrors({});
+      } else {
+        // Modal opened for creating new product
+        setFormData({
+          name: "",
+          description: "",
+          price: "",
+          stock_kg: "",
+          category: "Ikan Konsumsi",
+          image_url: "",
+          pond_id: "none",
+        });
+        setErrors({});
+      }
+      setIsInitialized(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, editData?.id]); // Only depend on editData.id, not the whole object
+  }, [isOpen, editData, isInitialized]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -192,13 +197,12 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
-        onInteractOutside={(e) => {
-          // Prevent closing when clicking on form elements
-          const target = e.target;
-          if (target.closest && target.closest("form")) {
-            e.preventDefault();
-          }
+        className="sm:max-w-[600px]"
+        onPointerDownOutside={(e) => {
+          if (loading) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (loading) e.preventDefault();
         }}
       >
         <DialogHeader>
@@ -216,8 +220,6 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
           onSubmit={handleSubmit}
           className="space-y-4"
           autoComplete="on"
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
         >
           <div className="space-y-2">
             <Label htmlFor="product-name">Nama Produk *</Label>
@@ -368,8 +370,8 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
             <Input
               id="product-image"
               name="product-image"
-              type="url"
-              autoComplete="url"
+              type="text"
+              autoComplete="off"
               value={formData.image_url}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, image_url: e.target.value }))
@@ -377,7 +379,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
               placeholder="https://example.com/image.jpg"
             />
             <p className="text-xs text-muted-foreground">
-              Masukkan URL gambar produk (opsional)
+              URL gambar produk (opsional)
             </p>
           </div>
 

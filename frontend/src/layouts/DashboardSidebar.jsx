@@ -84,14 +84,14 @@ export function DashboardSidebar({ onNavigate, currentPage }) {
 
   // Shared sidebar content
   const SidebarContent = () => (
-    <>
-      <div className="p-6">
-        <h2 className="text-foreground mb-1">
+    <div className="flex flex-col h-full">
+      <div className="p-6 border-b border-border">
+        <h2 className="text-foreground mb-1 font-semibold">
           {user?.role === "petambak" ? "Panel Petambak" : "Admin Panel"}
         </h2>
         <p className="text-muted-foreground text-sm">Kelola budidaya Anda</p>
       </div>
-      <nav className="px-3 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {sidebarItems.map((item, index) => (
           <SidebarMenuItem
             key={index}
@@ -102,7 +102,7 @@ export function DashboardSidebar({ onNavigate, currentPage }) {
           />
         ))}
       </nav>
-    </>
+    </div>
   );
 
   return (
@@ -128,7 +128,7 @@ export function DashboardSidebar({ onNavigate, currentPage }) {
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] bg-white border-r border-border overflow-y-auto z-30">
+      <aside className="hidden lg:block fixed top-0 left-0 w-64 h-screen bg-white border-r border-border shadow-sm z-30">
         <SidebarContent />
       </aside>
     </>

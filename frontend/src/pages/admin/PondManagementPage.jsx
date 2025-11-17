@@ -55,6 +55,7 @@ const PondForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Reset form when modal opens/closes, based on editData
   useEffect(() => {
@@ -66,27 +67,32 @@ const PondForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
         description: "",
       });
       setErrors({});
+      setIsInitialized(false);
       return;
     }
 
-    // When modal opens, populate form based on editData
-    if (isOpen && editData) {
-      setFormData({
-        name: editData.name || "",
-        location: editData.location || "",
-        description: editData.description || "",
-      });
-      setErrors({});
-    } else if (isOpen && !editData) {
-      // Modal opened for creating new pond
-      setFormData({
-        name: "",
-        location: "",
-        description: "",
-      });
-      setErrors({});
+    // Only initialize once when modal opens
+    if (isOpen && !isInitialized) {
+      // When modal opens, populate form based on editData
+      if (editData) {
+        setFormData({
+          name: editData.name || "",
+          location: editData.location || "",
+          description: editData.description || "",
+        });
+        setErrors({});
+      } else {
+        // Modal opened for creating new pond
+        setFormData({
+          name: "",
+          location: "",
+          description: "",
+        });
+        setErrors({});
+      }
+      setIsInitialized(true);
     }
-  }, [isOpen, editData?.id]); // Only depend on editData.id, not the whole object
+  }, [isOpen, editData, isInitialized]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -121,15 +127,19 @@ const PondForm = ({ isOpen, onClose, onSubmit, editData, loading }) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !loading) onClose();
+      }}
+    >
       <DialogContent
         className="sm:max-w-[500px]"
-        onInteractOutside={(e) => {
-          // Prevent closing when clicking on form elements
-          const target = e.target;
-          if (target.closest && target.closest("form")) {
-            e.preventDefault();
-          }
+        onPointerDownOutside={(e) => {
+          if (loading) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (loading) e.preventDefault();
         }}
       >
         <DialogHeader>

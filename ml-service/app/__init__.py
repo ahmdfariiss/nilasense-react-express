@@ -27,9 +27,9 @@ def create_app(config_class=Config):
         from utils.model_utils import get_model_instance
         try:
             model = get_model_instance()
-            print("✅ ML Model loaded successfully at startup!")
+            print("[OK] ML Model loaded successfully at startup!")
         except Exception as e:
-            print(f"⚠️  Warning: Could not load ML model: {e}")
+            print(f"[WARNING] Could not load ML model: {e}")
             print("   The service will start but predictions may use fallback logic.")
     
     # Register blueprints

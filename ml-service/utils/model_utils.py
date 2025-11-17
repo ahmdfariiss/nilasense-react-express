@@ -52,7 +52,7 @@ class WaterQualityModel:
                 self.metadata = joblib.load(metadata_path)
             else:
                 # Create default metadata if file doesn't exist
-                print(f"⚠️  Warning: Metadata file not found, using defaults")
+                print(f"[WARNING] Metadata file not found, using defaults")
                 self.metadata = {}
             
             # Extract important info with defaults
@@ -91,7 +91,7 @@ class WaterQualityModel:
             if 'feature_importance' not in self.metadata:
                 self.metadata['feature_importance'] = {}
             
-            print(f"✅ Model loaded successfully!")
+            print(f"[OK] Model loaded successfully!")
             print(f"   Model type: {self.metadata['model_type']}")
             if self.metadata['accuracy'] > 0:
                 print(f"   Accuracy: {self.metadata['accuracy']*100:.2f}%")
@@ -100,12 +100,12 @@ class WaterQualityModel:
             return True
             
         except FileNotFoundError as e:
-            print(f"❌ Error: Model files not found in {self.model_dir}")
+            print(f"[ERROR] Model files not found in {self.model_dir}")
             print(f"   Please run the training notebook first to generate model files.")
             print(f"   Details: {str(e)}")
             return False
         except Exception as e:
-            print(f"❌ Error loading model: {str(e)}")
+            print(f"[ERROR] Error loading model: {str(e)}")
             import traceback
             traceback.print_exc()
             return False

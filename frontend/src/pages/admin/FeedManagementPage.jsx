@@ -76,6 +76,7 @@ const FeedScheduleForm = ({
   });
 
   const [errors, setErrors] = useState({});
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Reset form when modal opens/closes, based on editData
   useEffect(() => {
@@ -89,31 +90,36 @@ const FeedScheduleForm = ({
         feed_date: new Date().toISOString().split("T")[0],
       });
       setErrors({});
+      setIsInitialized(false);
       return;
     }
 
-    // When modal opens, populate form based on editData
-    if (isOpen && editData) {
-      setFormData({
-        pond_id: editData.pond_id || "",
-        feed_time: editData.feed_time || "",
-        amount_kg: editData.amount_kg || "",
-        feed_type: editData.feed_type || "Pelet Standar",
-        feed_date: editData.feed_date || new Date().toISOString().split("T")[0],
-      });
-      setErrors({});
-    } else if (isOpen && !editData) {
-      // Modal opened for creating new schedule
-      setFormData({
-        pond_id: "",
-        feed_time: "",
-        amount_kg: "",
-        feed_type: "Pelet Standar",
-        feed_date: new Date().toISOString().split("T")[0],
-      });
-      setErrors({});
+    // Only initialize once when modal opens
+    if (isOpen && !isInitialized) {
+      // When modal opens, populate form based on editData
+      if (editData) {
+        setFormData({
+          pond_id: editData.pond_id || "",
+          feed_time: editData.feed_time || "",
+          amount_kg: editData.amount_kg || "",
+          feed_type: editData.feed_type || "Pelet Standar",
+          feed_date: editData.feed_date || new Date().toISOString().split("T")[0],
+        });
+        setErrors({});
+      } else {
+        // Modal opened for creating new schedule
+        setFormData({
+          pond_id: "",
+          feed_time: "",
+          amount_kg: "",
+          feed_type: "Pelet Standar",
+          feed_date: new Date().toISOString().split("T")[0],
+        });
+        setErrors({});
+      }
+      setIsInitialized(true);
     }
-  }, [isOpen, editData?.id]); // Only depend on editData.id, not the whole object
+  }, [isOpen, editData, isInitialized]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -147,10 +153,18 @@ const FeedScheduleForm = ({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!open && !loading) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent
+        className="sm:max-w-[500px]"
+        onPointerDownOutside={(e) => {
+          if (loading) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (loading) e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {editData ? "Edit Jadwal Pakan" : "Tambah Jadwal Pakan"}

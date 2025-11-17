@@ -275,7 +275,7 @@ export function WelcomePage({ onNavigate, userRole }) {
     >
       {/* Hero Section */}
       <motion.section
-        className="relative min-h-[600px] bg-gradient-to-br from-primary via-accent to-info overflow-hidden"
+        className="relative min-h-[600px] pt-16 bg-gradient-to-br from-primary via-accent to-info overflow-hidden"
         variants={heroVariants}
       >
         {/* Background Image with Animation */}
@@ -377,11 +377,11 @@ export function WelcomePage({ onNavigate, userRole }) {
                       whileInView="visible"
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-white text-black shadow-xl font-bold border-2 border-white rounded-lg mx-10 mx-10 text-lg hover:bg-gray-50 inline-flex items-center justify-center min-w-[180px]"
+                      className="bg-white text-black shadow-xl font-bold border-2 border-white rounded-lg px-10 py-4 text-lg hover:bg-gray-50 inline-flex items-center justify-center min-w-[180px]"
                       onClick={() => onNavigate('register')}
                       style={{ willChange: 'transform' }}
                     >
-                      Mulai Sekarang Gratis
+                      Mulai Sekarang
                     </motion.button>
                     <motion.button
                       variants={buttonIdleVariants}
