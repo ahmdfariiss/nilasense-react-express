@@ -11,8 +11,8 @@ import {
   CreditCard,
   Shield,
   ArrowRight,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function Footer({ onNavigate }) {
   return (
@@ -25,7 +25,7 @@ export function Footer({ onNavigate }) {
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                 <span className="text-xl">🐟</span>
               </div>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+              <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>
                 NilaSense
               </span>
             </div>
@@ -64,7 +64,7 @@ export function Footer({ onNavigate }) {
             <ul className="space-y-2 text-white/70">
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("products")}
+                  onClick={() => onNavigate && onNavigate('products')}
                   className="hover:text-white transition-colors flex items-center gap-2 group"
                 >
                   <span>Produk Ikan Nila</span>
@@ -73,7 +73,7 @@ export function Footer({ onNavigate }) {
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("products")}
+                  onClick={() => onNavigate && onNavigate('products')}
                   className="hover:text-white transition-colors flex items-center gap-2 group"
                 >
                   <span>Marketplace</span>
@@ -92,7 +92,7 @@ export function Footer({ onNavigate }) {
             <ul className="space-y-2 text-white/70">
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("pusat-bantuan")}
+                  onClick={() => onNavigate && onNavigate('pusat-bantuan')}
                   className="hover:text-white transition-colors flex items-center gap-2 group"
                 >
                   <span>Pusat Bantuan</span>
@@ -101,7 +101,7 @@ export function Footer({ onNavigate }) {
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("cara-berbelanja")}
+                  onClick={() => onNavigate && onNavigate('cara-berbelanja')}
                   className="hover:text-white transition-colors flex items-center gap-2 group"
                 >
                   <span>Cara Berbelanja</span>
@@ -111,7 +111,7 @@ export function Footer({ onNavigate }) {
               <li>
                 <button
                   onClick={() =>
-                    onNavigate && onNavigate("pengiriman-pengembalian")
+                    onNavigate && onNavigate('pengiriman-pengembalian')
                   }
                   className="hover:text-white transition-colors flex items-center gap-2 group"
                 >
@@ -121,7 +121,7 @@ export function Footer({ onNavigate }) {
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("faq")}
+                  onClick={() => onNavigate && onNavigate('faq')}
                   className="hover:text-white transition-colors flex items-center gap-2 group"
                 >
                   <span>FAQ</span>
@@ -130,7 +130,7 @@ export function Footer({ onNavigate }) {
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("order-history")}
+                  onClick={() => onNavigate && onNavigate('order-history')}
                   className="hover:text-white transition-colors flex items-center gap-2 group"
                 >
                   <span>Status Pesanan</span>
@@ -149,7 +149,7 @@ export function Footer({ onNavigate }) {
             <ul className="space-y-3 text-white/70">
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("tentang-kami")}
+                  onClick={() => onNavigate && onNavigate('tentang-kami')}
                   className="hover:text-white transition-colors flex items-center gap-2 group"
                 >
                   <span>Tentang Kami</span>
@@ -160,24 +160,24 @@ export function Footer({ onNavigate }) {
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-white/50" />
                   <a
-                    href="mailto:info@nilasense.com"
+                    href="mailto:afarisalaziz201@gmail.com"
                     className="hover:text-white transition-colors text-sm"
                   >
-                    info@nilasense.com
+                    afarisalaziz201@gmail.com
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-white/50" />
                   <a
-                    href="tel:+6281234567890"
+                    href="tel:+6283871441288"
                     className="hover:text-white transition-colors text-sm"
                   >
-                    +62 812-3456-7890
+                    +62 83871441288
                   </a>
                 </div>
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-white/50 mt-0.5" />
-                  <span className="text-sm">Jakarta, Indonesia</span>
+                  <span className="text-sm">Bogor, Indonesia</span>
                 </div>
               </li>
             </ul>
@@ -192,27 +192,27 @@ export function Footer({ onNavigate }) {
             </div>
             <div className="flex flex-wrap gap-6 text-sm">
               <button
-                onClick={() => onNavigate && onNavigate("privasi")}
+                onClick={() => onNavigate && onNavigate('privasi')}
                 className="text-white/70 hover:text-white transition-colors"
               >
                 Privasi
               </button>
               <button
-                onClick={() => onNavigate && onNavigate("syarat-ketentuan")}
+                onClick={() => onNavigate && onNavigate('syarat-ketentuan')}
                 className="text-white/70 hover:text-white transition-colors"
               >
                 Syarat & Ketentuan
               </button>
               <button
                 onClick={() =>
-                  onNavigate && onNavigate("kebijakan-pengembalian")
+                  onNavigate && onNavigate('kebijakan-pengembalian')
                 }
                 className="text-white/70 hover:text-white transition-colors"
               >
                 Kebijakan Pengembalian
               </button>
               <button
-                onClick={() => onNavigate && onNavigate("disclaimer")}
+                onClick={() => onNavigate && onNavigate('disclaimer')}
                 className="text-white/70 hover:text-white transition-colors"
               >
                 Disclaimer
