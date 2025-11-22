@@ -21,7 +21,9 @@ export const AuthProvider = ({ children }) => {
           setUser(data);
         } catch (error) {
           console.error("Sesi tidak valid, token dibersihkan.", error);
+          // Clear all tokens
           localStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
           setToken(null);
           setUser(null);
           delete api.defaults.headers.common["Authorization"];
@@ -39,7 +41,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await api.post("/auth/login", { email, password });
 
+      // Save both access token and refresh token
       localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken);
       setToken(data.token);
       setUser(data.user);
       api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
@@ -75,14 +79,20 @@ export const AuthProvider = ({ children }) => {
   // Fungsi untuk logout
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     setToken(null);
     setUser(null);
     delete api.defaults.headers.common["Authorization"];
   };
 
+  // Fungsi untuk update user data (digunakan setelah refresh token)
+  const updateUser = (newUser) => {
+    setUser(newUser);
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, register, logout }}
+      value={{ user, token, loading, login, register, logout, updateUser }}
     >
       {children}
     </AuthContext.Provider>

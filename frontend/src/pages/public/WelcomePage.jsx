@@ -375,9 +375,14 @@ export function WelcomePage({ onNavigate, userRole }) {
                       animate={showButtonAnimation ? 'idle' : 'visible'}
                       viewport={{ once: true }}
                       whileInView="visible"
-                      whileHover={{ scale: 1.1 }}
+                      whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-white text-black shadow-xl font-bold border-2 border-white rounded-lg px-10 py-4 text-lg hover:bg-gray-50 inline-flex items-center justify-center min-w-[180px]"
+                      className="bg-white text-black shadow-xl font-semibold border-2 border-white rounded-lg
+                        px-5 py-2.5 text-sm min-w-[130px]
+                        sm:px-6 sm:py-3 sm:text-base sm:min-w-[150px]
+                        md:px-8 md:py-3.5 md:text-base md:min-w-[170px]
+                        lg:px-10 lg:py-4 lg:text-lg lg:min-w-[200px]
+                        hover:bg-gray-50 inline-flex items-center justify-center transition-colors"
                       onClick={() => onNavigate('register')}
                       style={{ willChange: 'transform' }}
                     >
@@ -390,9 +395,14 @@ export function WelcomePage({ onNavigate, userRole }) {
                       viewport={{ once: true }}
                       whileInView="visible"
                       transition={{ delay: 0.2 }}
-                      whileHover={{ scale: 1.1 }}
+                      whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-white/10 text-white backdrop-blur-md shadow-xl font-bold border-2 border-white rounded-lg px-10 py-4 text-lg hover:bg-white/30 hover:border-white inline-flex items-center justify-center min-w-[180px]"
+                      className="bg-white/10 text-white backdrop-blur-md shadow-xl font-semibold border-2 border-white rounded-lg
+                        px-5 py-2.5 text-sm min-w-[130px]
+                        sm:px-6 sm:py-3 sm:text-base sm:min-w-[150px]
+                        md:px-8 md:py-3.5 md:text-base md:min-w-[170px]
+                        lg:px-10 lg:py-4 lg:text-lg lg:min-w-[200px]
+                        hover:bg-white/30 hover:border-white inline-flex items-center justify-center transition-colors"
                       onClick={() => onNavigate('products')}
                       style={{ willChange: 'transform' }}
                     >
@@ -407,9 +417,14 @@ export function WelcomePage({ onNavigate, userRole }) {
                       animate={showButtonAnimation ? 'idle' : 'visible'}
                       viewport={{ once: true }}
                       whileInView="visible"
-                      whileHover={{ scale: 1.1 }}
+                      whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-white text-[#0891b2] shadow-xl font-bold border-2 border-white rounded-lg px-10 py-4 text-lg hover:bg-gray-50 inline-flex items-center justify-center min-w-[180px]"
+                      className="bg-white text-[#0891b2] shadow-xl font-semibold border-2 border-white rounded-lg
+                        px-5 py-2.5 text-sm min-w-[130px]
+                        sm:px-6 sm:py-3 sm:text-base sm:min-w-[150px]
+                        md:px-8 md:py-3.5 md:text-base md:min-w-[170px]
+                        lg:px-10 lg:py-4 lg:text-lg lg:min-w-[200px]
+                        hover:bg-gray-50 inline-flex items-center justify-center transition-colors"
                       onClick={() => onNavigate('admin-dashboard')}
                       style={{ willChange: 'transform' }}
                     >
@@ -422,9 +437,14 @@ export function WelcomePage({ onNavigate, userRole }) {
                       viewport={{ once: true }}
                       whileInView="visible"
                       transition={{ delay: 0.2 }}
-                      whileHover={{ scale: 1.1 }}
+                      whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-white/10 text-white backdrop-blur-md shadow-xl font-bold border-2 border-white rounded-lg px-10 py-4 text-lg hover:bg-white/30 hover:border-white inline-flex items-center justify-center min-w-[180px]"
+                      className="bg-white/10 text-white backdrop-blur-md shadow-xl font-semibold border-2 border-white rounded-lg
+                        px-5 py-2.5 text-sm min-w-[130px]
+                        sm:px-6 sm:py-3 sm:text-base sm:min-w-[150px]
+                        md:px-8 md:py-3.5 md:text-base md:min-w-[170px]
+                        lg:px-10 lg:py-4 lg:text-lg lg:min-w-[200px]
+                        hover:bg-white/30 hover:border-white inline-flex items-center justify-center transition-colors"
                       onClick={() => onNavigate('water-monitoring')}
                       style={{ willChange: 'transform' }}
                     >
@@ -439,9 +459,14 @@ export function WelcomePage({ onNavigate, userRole }) {
                       animate={showButtonAnimation ? 'idle' : 'visible'}
                       viewport={{ once: true }}
                       whileInView="visible"
-                      whileHover={{ scale: 1.1 }}
+                      whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-white text-[#0891b2] shadow-xl font-bold border-2 border-white rounded-lg px-10 py-4 text-lg hover:bg-gray-50 inline-flex items-center justify-center min-w-[180px]"
+                      className="bg-white text-[#0891b2] shadow-xl font-semibold border-2 border-white rounded-lg
+                        px-5 py-2.5 text-sm min-w-[130px]
+                        sm:px-6 sm:py-3 sm:text-base sm:min-w-[150px]
+                        md:px-8 md:py-3.5 md:text-base md:min-w-[170px]
+                        lg:px-10 lg:py-4 lg:text-lg lg:min-w-[200px]
+                        hover:bg-gray-50 inline-flex items-center justify-center transition-colors"
                       onClick={() => onNavigate('products')}
                       style={{ willChange: 'transform' }}
                     >
@@ -454,9 +479,14 @@ export function WelcomePage({ onNavigate, userRole }) {
                       viewport={{ once: true }}
                       whileInView="visible"
                       transition={{ delay: 0.2 }}
-                      whileHover={{ scale: 1.1 }}
+                      whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-white/10 text-white backdrop-blur-md shadow-xl font-bold border-2 border-white rounded-lg px-10 py-4 text-lg hover:bg-white/30 hover:border-white inline-flex items-center justify-center min-w-[180px]"
+                      className="bg-white/10 text-white backdrop-blur-md shadow-xl font-semibold border-2 border-white rounded-lg
+                        px-5 py-2.5 text-sm min-w-[130px]
+                        sm:px-6 sm:py-3 sm:text-base sm:min-w-[150px]
+                        md:px-8 md:py-3.5 md:text-base md:min-w-[170px]
+                        lg:px-10 lg:py-4 lg:text-lg lg:min-w-[200px]
+                        hover:bg-white/30 hover:border-white inline-flex items-center justify-center transition-colors"
                       onClick={() => onNavigate('cart')}
                       style={{ willChange: 'transform' }}
                     >

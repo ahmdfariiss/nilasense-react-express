@@ -12,22 +12,25 @@ load_dotenv()
 app = create_app()
 
 if __name__ == '__main__':
-    # Use port 5002 if 5000 is not available (Windows sometimes reserves 5000)
-    default_port = int(os.getenv('FLASK_PORT', 5002))
-    port = int(os.getenv('FLASK_PORT', default_port))
+    # Use port from environment or default to 5002
+    port = int(os.getenv('PORT', os.getenv('FLASK_PORT', 5002)))
     debug = os.getenv('FLASK_ENV') == 'development'
-    
+
+    # Use 0.0.0.0 in production, localhost in development
+    host = '0.0.0.0' if os.getenv('FLASK_ENV') == 'production' else '127.0.0.1'
+
     print(f"\n{'='*50}")
     print(f"NilaSense ML Service Starting...")
     print(f"{'='*50}")
     print(f"Environment: {os.getenv('FLASK_ENV', 'development')}")
+    print(f"Host: {host}")
     print(f"Port: {port}")
     print(f"Debug Mode: {debug}")
     print(f"{'='*50}\n")
-    
+
     try:
         app.run(
-            host='127.0.0.1',  # Use localhost instead of 0.0.0.0 on Windows
+            host=host,
             port=port,
             debug=debug
         )
@@ -45,7 +48,7 @@ if __name__ == '__main__':
             for alt_port in [5002, 5003, 5004, 8000, 8080]:
                 try:
                     print(f"   Mencoba port {alt_port}...")
-                    app.run(host='127.0.0.1', port=alt_port, debug=debug)
+                    app.run(host=host, port=alt_port, debug=debug)
                     break
                 except OSError:
                     continue

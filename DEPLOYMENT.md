@@ -1,1063 +1,624 @@
-# 🚀 Panduan Deployment NilaSense
+# NilaSense Deployment Guide
 
-Dokumentasi lengkap untuk deployment aplikasi NilaSense (Frontend, Backend, dan ML Service) menggunakan platform gratis.
-
----
-
-## 📋 Daftar Isi
-
-1. [Arsitektur Aplikasi](#arsitektur-aplikasi)
-2. [Platform Deployment Gratis](#platform-deployment-gratis)
-3. [Persiapan Sebelum Deploy](#persiapan-sebelum-deploy)
-4. [Deployment Frontend (React + Vite)](#deployment-frontend-react--vite)
-5. [Deployment Backend (Express.js)](#deployment-backend-expressjs)
-6. [Deployment ML Service (Flask)](#deployment-ml-service-flask)
-7. [Deployment Database (PostgreSQL)](#deployment-database-postgresql)
-8. [Konfigurasi Environment Variables](#konfigurasi-environment-variables)
-9. [Testing Setelah Deploy](#testing-setelah-deploy)
-10. [Troubleshooting](#troubleshooting)
+Panduan lengkap untuk deploy NilaSense ke production menggunakan:
+- **Frontend**: Vercel
+- **Backend**: Render
+- **Database**: Supabase (PostgreSQL)
+- **ML Service**: Render
 
 ---
 
-## 🏗️ Arsitektur Aplikasi
+## Daftar Isi
 
-NilaSense terdiri dari 3 service utama:
+1. [Arsitektur Deployment](#1-arsitektur-deployment)
+2. [Persiapan Awal](#2-persiapan-awal)
+3. [Setup Database (Supabase)](#3-setup-database-supabase)
+4. [Deploy Backend (Render)](#4-deploy-backend-render)
+5. [Deploy ML Service (Render)](#5-deploy-ml-service-render)
+6. [Deploy Frontend (Vercel)](#6-deploy-frontend-vercel)
+7. [Konfigurasi Environment Variables](#7-konfigurasi-environment-variables)
+8. [Post-Deployment Testing](#8-post-deployment-testing)
+9. [Troubleshooting](#9-troubleshooting)
+
+---
+
+## 1. Arsitektur Deployment
 
 ```
-┌─────────────────┐
-│    Frontend     │ (React + Vite)
-│  Vercel/Netlify │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│    Backend      │ (Express.js + PostgreSQL)
-│   Render.com    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   ML Service    │ (Flask + scikit-learn)
-│   Render.com    │
-└─────────────────┘
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│                 │     │                 │     │                 │
+│  Frontend       │────▶│  Backend        │────▶│  Database       │
+│  (Vercel)       │     │  (Render)       │     │  (Supabase)     │
+│                 │     │                 │     │                 │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │
+                                 ▼
+                        ┌─────────────────┐
+                        │                 │
+                        │  ML Service     │
+                        │  (Render)       │
+                        │                 │
+                        └─────────────────┘
 ```
 
----
-
-## 🎯 Platform Deployment Gratis
-
-### Rekomendasi Platform:
-
-| Service | Platform | Alasan | Limit Gratis |
-|---------|----------|--------|--------------|
-| **Frontend** | Vercel | Build otomatis, CDN global, unlimited bandwidth | Unlimited projects, 100GB bandwidth/bulan |
-| **Backend** | Render.com | Support PostgreSQL, free SSL, auto-deploy dari Git | 750 jam/bulan, sleep after 15 min inactive |
-| **ML Service** | Render.com | Support Python/Flask, persistent storage | 750 jam/bulan, sleep after 15 min inactive |
-| **Database** | Supabase / Render PostgreSQL | Free PostgreSQL dengan UI admin | 500MB storage (Supabase), 1GB (Render) |
-
-### Alternatif Platform:
-
-- **Frontend**: Netlify, GitHub Pages, Cloudflare Pages
-- **Backend**: Railway, Fly.io, Cyclic
-- **ML Service**: PythonAnywhere, Heroku (limited free tier)
-- **Database**: ElephantSQL, Neon.tech, Railway PostgreSQL
+**URL Production (contoh):**
+- Frontend: `https://nilasense.vercel.app`
+- Backend: `https://nilasense-backend.onrender.com`
+- ML Service: `https://nilasense-ml.onrender.com`
 
 ---
 
-## ⚙️ Persiapan Sebelum Deploy
+## 2. Persiapan Awal
 
-### 1. Push Code ke GitHub
+### 2.1 Buat Akun di Platform
+
+1. **Vercel**: https://vercel.com (login dengan GitHub)
+2. **Render**: https://render.com (login dengan GitHub)
+3. **Supabase**: https://supabase.com (login dengan GitHub)
+
+### 2.2 Push Code ke GitHub
+
+Pastikan repository sudah di-push ke GitHub:
 
 ```bash
-# Inisialisasi git (jika belum)
-git init
 git add .
 git commit -m "Prepare for deployment"
-
-# Buat repository di GitHub, lalu:
-git remote add origin https://github.com/username/nilasense.git
-git branch -M main
-git push -u origin main
+git push origin main
 ```
 
-### 2. Cek Dependencies
+### 2.3 Struktur Folder yang Diperlukan
 
-Pastikan semua file berikut ada:
-
-**Frontend:**
-- ✅ `frontend/package.json`
-- ✅ `frontend/vite.config.js`
-- ✅ `frontend/.env.example`
-
-**Backend:**
-- ✅ `backend/package.json`
-- ✅ `backend/server.js`
-- ✅ `backend/.env.example`
-
-**ML Service:**
-- ✅ `ml-service/requirements.txt`
-- ✅ `ml-service/run.py`
-- ✅ `ml-service/.env.example`
-
-### 3. Test Local
-
-```bash
-# Test frontend
-cd frontend
-npm run build
-npm run preview
-
-# Test backend
-cd ../backend
-npm start
-
-# Test ML service
-cd ../ml-service
-python run.py
+```
+nilasense-react-express-aseli/
+├── frontend/          # React + Vite
+├── backend/           # Express.js
+├── ml-service/        # Flask + ML
+└── DEPLOYMENT.md      # File ini
 ```
 
 ---
 
-## 🎨 Deployment Frontend (React + Vite)
+## 3. Setup Database (Supabase)
 
-### Menggunakan Vercel (Recommended)
+### 3.1 Buat Project Baru
 
-#### Langkah 1: Persiapan
+1. Login ke [Supabase Dashboard](https://supabase.com/dashboard)
+2. Klik **"New Project"**
+3. Isi detail:
+   - **Name**: `nilasense-db`
+   - **Database Password**: (simpan password ini!)
+   - **Region**: Pilih yang terdekat (Singapore)
+4. Klik **"Create new project"**
 
-1. Buat file `vercel.json` di folder `frontend/`:
+### 3.2 Dapatkan Connection String
 
-```json
-{
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ],
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
-  "framework": "vite"
-}
-```
-
-2. Update `frontend/package.json` pastikan ada:
-
-```json
-{
-  "scripts": {
-    "build": "vite build",
-    "preview": "vite preview"
-  }
-}
-```
-
-#### Langkah 2: Deploy ke Vercel
-
-**Opsi A: Via Web Dashboard**
-
-1. Buka [vercel.com](https://vercel.com)
-2. Sign up/Login dengan GitHub
-3. Klik "Add New Project"
-4. Import repository NilaSense
-5. Konfigurasi:
-   - **Framework Preset**: Vite
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `build`
-6. Tambahkan Environment Variables:
+1. Buka **Project Settings** → **Database**
+2. Scroll ke **Connection string** → **URI**
+3. Copy connection string, formatnya:
    ```
-   VITE_API_URL=https://your-backend.onrender.com
-   VITE_ML_API_URL=https://your-ml-service.onrender.com
-   ```
-7. Klik "Deploy"
-
-**Opsi B: Via CLI**
-
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Login
-vercel login
-
-# Deploy
-cd frontend
-vercel
-
-# Follow prompts:
-# - Set up and deploy? Yes
-# - Which scope? Your account
-# - Link to existing project? No
-# - Project name? nilasense-frontend
-# - Directory? ./
-# - Override settings? No
-```
-
-#### Langkah 3: Konfigurasi Domain
-
-Setelah deploy, Vercel akan memberikan URL seperti:
-```
-https://nilasense-frontend-xxxxx.vercel.app
-```
-
-**Custom Domain (Opsional):**
-1. Buka Project Settings > Domains
-2. Tambahkan domain custom
-3. Update DNS sesuai instruksi Vercel
-
----
-
-### Menggunakan Netlify (Alternatif)
-
-#### Langkah 1: Persiapan
-
-Buat file `netlify.toml` di folder `frontend/`:
-
-```toml
-[build]
-  base = "frontend"
-  command = "npm run build"
-  publish = "build"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-[build.environment]
-  NODE_VERSION = "18"
-```
-
-#### Langkah 2: Deploy
-
-1. Buka [netlify.com](https://netlify.com)
-2. Sign up/Login
-3. "Add new site" > "Import an existing project"
-4. Connect GitHub repository
-5. Konfigurasi:
-   - **Base directory**: `frontend`
-   - **Build command**: `npm run build`
-   - **Publish directory**: `frontend/build`
-6. Tambahkan Environment Variables di Site settings
-7. Deploy
-
----
-
-## 🔧 Deployment Backend (Express.js)
-
-### Menggunakan Render.com (Recommended)
-
-#### Langkah 1: Persiapan
-
-1. Pastikan `backend/package.json` memiliki:
-
-```json
-{
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  }
-}
-```
-
-2. Buat file `render.yaml` di root project (opsional):
-
-```yaml
-services:
-  - type: web
-    name: nilasense-backend
-    env: node
-    region: singapore
-    plan: free
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 5001
-```
-
-#### Langkah 2: Setup Database di Render
-
-1. Login ke [render.com](https://render.com)
-2. Dashboard > "New" > "PostgreSQL"
-3. Konfigurasi:
-   - **Name**: nilasense-db
-   - **Database**: nilasense_prod
-   - **User**: (auto-generated)
-   - **Region**: Singapore
-   - **Plan**: Free
-4. Klik "Create Database"
-5. **Simpan credentials** yang diberikan:
-   ```
-   Internal Database URL: postgresql://...
-   External Database URL: postgresql://...
+   postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
    ```
 
-#### Langkah 3: Deploy Backend ke Render
+### 3.3 Jalankan Migration
 
-1. Dashboard > "New" > "Web Service"
-2. Connect GitHub repository
-3. Konfigurasi:
-   - **Name**: nilasense-backend
-   - **Region**: Singapore
-   - **Branch**: main
-   - **Root Directory**: `backend`
-   - **Runtime**: Node
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-   - **Plan**: Free
-4. **Environment Variables** (klik "Advanced"):
-   ```
-   NODE_ENV=production
-   PORT=5001
-   DATABASE_URL=<paste-internal-database-url>
-   JWT_SECRET=<generate-random-secret-key>
-   MIDTRANS_SERVER_KEY=<your-midtrans-server-key>
-   MIDTRANS_CLIENT_KEY=<your-midtrans-client-key>
-   FRONTEND_URL=https://nilasense-frontend.vercel.app
-   ML_API_URL=https://nilasense-ml.onrender.com
-   ```
+Ada 2 cara untuk menjalankan migration:
 
-5. Klik "Create Web Service"
+#### Cara 1: Via Supabase SQL Editor (Recommended)
 
-#### Langkah 4: Inisialisasi Database
+1. Buka **SQL Editor** di Supabase Dashboard
+2. Jalankan migration secara berurutan:
 
-Setelah backend deploy:
-
-1. Buka Render Shell (di dashboard service)
-2. Jalankan migrasi:
-   ```bash
-   cd backend
-   npm run migrate
-   # atau
-   node scripts/migrate.js
-   ```
-
-**ATAU** menggunakan Render PostgreSQL dashboard:
-1. Buka database dashboard
-2. Tab "Connect" > "SQL Editor"
-3. Paste isi file `backend/migrations/*.sql` dan execute
-
----
-
-### Menggunakan Railway (Alternatif)
-
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Login
-railway login
-
-# Inisialisasi
-cd backend
-railway init
-
-# Deploy
-railway up
-
-# Add PostgreSQL
-railway add --database postgres
-
-# Set environment variables
-railway variables set NODE_ENV=production
-railway variables set JWT_SECRET=your-secret-key
-```
-
----
-
-## 🤖 Deployment ML Service (Flask)
-
-### Menggunakan Render.com
-
-#### Langkah 1: Persiapan
-
-1. Pastikan `ml-service/requirements.txt` lengkap:
-
-```txt
-Flask==3.0.0
-flask-cors==4.0.0
-python-dotenv==1.0.0
-numpy==1.24.3
-pandas==2.0.3
-scikit-learn==1.3.0
-joblib==1.3.2
-gunicorn==21.2.0
-```
-
-2. Buat file `ml-service/gunicorn_config.py`:
-
-```python
-import os
-
-bind = f"0.0.0.0:{os.environ.get('PORT', '5002')}"
-workers = 2
-threads = 2
-timeout = 120
-worker_class = 'sync'
-```
-
-3. Update `ml-service/run.py` untuk production:
-
-```python
-import os
-from app import create_app
-
-app = create_app()
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5002))
-    # Development
-    if os.environ.get('FLASK_ENV') == 'development':
-        app.run(host='0.0.0.0', port=port, debug=True)
-    # Production
-    else:
-        app.run(host='0.0.0.0', port=port, debug=False)
-```
-
-#### Langkah 2: Deploy ke Render
-
-1. Dashboard > "New" > "Web Service"
-2. Connect repository
-3. Konfigurasi:
-   - **Name**: nilasense-ml
-   - **Region**: Singapore
-   - **Root Directory**: `ml-service`
-   - **Runtime**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn --config gunicorn_config.py run:app`
-   - **Plan**: Free
-4. **Environment Variables**:
-   ```
-   FLASK_ENV=production
-   PORT=5002
-   BACKEND_URL=https://nilasense-backend.onrender.com
-   ```
-5. Klik "Create Web Service"
-
-#### Langkah 3: Test ML Service
-
-Setelah deploy, test endpoint:
-
-```bash
-curl https://nilasense-ml.onrender.com/health
-
-# Response:
-# {"status": "healthy", "service": "ML Service"}
-```
-
----
-
-### Menggunakan PythonAnywhere (Alternatif)
-
-1. Buka [pythonanywhere.com](https://www.pythonanywhere.com)
-2. Sign up untuk free account
-3. Upload code via Git atau Files
-4. Setup Web App:
-   - Python version: 3.10
-   - Framework: Flask
-   - WSGI configuration: edit untuk point ke `run:app`
-5. Install dependencies di Bash console:
-   ```bash
-   pip install -r requirements.txt
-   ```
-6. Reload web app
-
----
-
-## 💾 Deployment Database (PostgreSQL)
-
-### Opsi 1: Supabase (Recommended untuk Development)
-
-**Keunggulan:**
-- Free 500MB storage
-- Admin dashboard dengan SQL editor
-- Real-time subscriptions
-- Auto-backup
-- Tidak sleep
-
-**Langkah:**
-
-1. Buka [supabase.com](https://supabase.com)
-2. "New Project"
-3. Konfigurasi:
-   - **Name**: nilasense-db
-   - **Database Password**: (generate strong password)
-   - **Region**: Southeast Asia (Singapore)
-   - **Pricing Plan**: Free
-4. Tunggu ~2 menit untuk provisioning
-5. Buka "Settings" > "Database"
-6. Copy **Connection String**:
-   ```
-   postgresql://postgres:[YOUR-PASSWORD]@db.xxx.supabase.co:5432/postgres
-   ```
-7. Gunakan SQL Editor untuk run migrasi
-
-**Migration via Supabase:**
 ```sql
--- Paste isi file backend/migrations/*.sql di SQL Editor
--- Execute satu per satu
+-- ================================================
+-- 001_initial_schema.sql
+-- ================================================
+
+-- Buat enum untuk role user
+CREATE TYPE user_role AS ENUM ('admin', 'petambak', 'buyer');
+
+-- Tabel Users
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role user_role DEFAULT 'buyer',
+    pond_id INTEGER,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabel Ponds (Kolam)
+CREATE TABLE ponds (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    location VARCHAR(255),
+    description TEXT,
+    size_m2 DECIMAL(10,2),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabel Water Quality Monitoring
+CREATE TABLE water_quality (
+    id SERIAL PRIMARY KEY,
+    pond_id INTEGER REFERENCES ponds(id) ON DELETE CASCADE,
+    temperature DECIMAL(5,2),
+    ph_level DECIMAL(4,2),
+    dissolved_oxygen DECIMAL(5,2),
+    turbidity DECIMAL(6,2),
+    recorded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabel Products
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price_per_kg DECIMAL(10,2) NOT NULL,
+    stock_kg DECIMAL(10,2) DEFAULT 0,
+    image_url VARCHAR(500),
+    pond_id INTEGER REFERENCES ponds(id),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabel Feed Schedules
+CREATE TABLE feed_schedules (
+    id SERIAL PRIMARY KEY,
+    pond_id INTEGER REFERENCES ponds(id) ON DELETE CASCADE,
+    feed_time TIME NOT NULL,
+    feed_amount_kg DECIMAL(6,2) NOT NULL,
+    feed_type VARCHAR(100),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabel Feed Logs
+CREATE TABLE feed_logs (
+    id SERIAL PRIMARY KEY,
+    pond_id INTEGER REFERENCES ponds(id) ON DELETE CASCADE,
+    schedule_id INTEGER REFERENCES feed_schedules(id),
+    fed_at TIMESTAMPTZ DEFAULT NOW(),
+    amount_kg DECIMAL(6,2),
+    fed_by INTEGER REFERENCES users(id),
+    notes TEXT
+);
+
+-- Tabel Cart
+CREATE TABLE cart_items (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+    quantity_kg DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, product_id)
+);
+
+-- Tabel Orders
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    order_number VARCHAR(50) UNIQUE NOT NULL,
+    user_id INTEGER REFERENCES users(id),
+    total_amount DECIMAL(12,2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    shipping_name VARCHAR(255),
+    shipping_phone VARCHAR(20),
+    shipping_address TEXT,
+    shipping_city VARCHAR(100),
+    shipping_postal_code VARCHAR(10),
+    notes TEXT,
+    payment_method VARCHAR(50),
+    payment_status VARCHAR(50) DEFAULT 'unpaid',
+    midtrans_order_id VARCHAR(100),
+    midtrans_transaction_id VARCHAR(100),
+    paid_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabel Order Items
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+    product_id INTEGER REFERENCES products(id),
+    product_name VARCHAR(255),
+    quantity_kg DECIMAL(10,2) NOT NULL,
+    price_per_kg DECIMAL(10,2) NOT NULL,
+    subtotal DECIMAL(12,2) NOT NULL
+);
+
+-- Tabel Password Reset Tokens
+CREATE TABLE password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX idx_water_quality_pond ON water_quality(pond_id);
+CREATE INDEX idx_water_quality_recorded ON water_quality(recorded_at);
+CREATE INDEX idx_products_pond ON products(pond_id);
+CREATE INDEX idx_orders_user ON orders(user_id);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_password_reset_token ON password_reset_tokens(token);
+
+-- Insert default admin user (password: admin123)
+INSERT INTO users (name, email, password_hash, role) VALUES
+('Admin NilaSense', 'admin@nilasense.com', '$2b$10$rICvqo5gPDsxPmNVHliMOuGPmhHqZxepeS/VISBCgVqd6pVqvQjku', 'admin');
+
+-- Insert sample pond
+INSERT INTO ponds (name, location, description, size_m2) VALUES
+('Kolam Utama', 'Bogor, Jawa Barat', 'Kolam budidaya ikan nila utama', 500);
+```
+
+#### Cara 2: Via Terminal (jika PostgreSQL client terinstall)
+
+```bash
+# Export connection string
+export DATABASE_URL="postgresql://postgres.[ref]:[password]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
+
+# Jalankan migration
+psql $DATABASE_URL -f backend/database/migrations/001_initial_schema.sql
 ```
 
 ---
 
-### Opsi 2: Render PostgreSQL
+## 4. Deploy Backend (Render)
 
-**Keunggulan:**
-- Terintegrasi dengan Render services
-- Free 1GB storage
-- Auto-backup
+### 4.1 Buat Web Service Baru
 
-**Kelemahan:**
-- Database akan dihapus setelah 90 hari (free tier)
+1. Login ke [Render Dashboard](https://dashboard.render.com)
+2. Klik **"New +"** → **"Web Service"**
+3. Connect repository GitHub Anda
+4. Pilih repository `nilasense-react-express-aseli`
 
-**Langkah:**
-1. Render Dashboard > "New" > "PostgreSQL"
-2. Konfigurasi database (sudah dijelaskan di bagian Backend)
-3. Gunakan Internal Database URL untuk backend di Render
-4. Gunakan External Database URL untuk akses lokal
+### 4.2 Konfigurasi Service
 
----
+| Setting | Value |
+|---------|-------|
+| **Name** | `nilasense-backend` |
+| **Region** | Singapore (Southeast Asia) |
+| **Branch** | `main` |
+| **Root Directory** | `backend` |
+| **Runtime** | Node |
+| **Build Command** | `npm install` |
+| **Start Command** | `node server.js` |
+| **Instance Type** | Free |
 
-### Opsi 3: ElephantSQL
+### 4.3 Environment Variables
 
-**Keunggulan:**
-- Free 20MB storage
-- Dedicated database
-- Web SQL browser
-
-**Langkah:**
-1. Buka [elephantsql.com](https://www.elephantsql.com)
-2. Sign up > "Create New Instance"
-3. Plan: Tiny Turtle (Free)
-4. Region: Asia Pacific (Singapore)
-5. Copy URL: `postgresql://...`
-6. Gunakan Browser untuk run migrations
-
----
-
-## 🔐 Konfigurasi Environment Variables
-
-### Frontend (.env.production)
-
-Buat di Vercel/Netlify dashboard:
+Tambahkan environment variables berikut di Render:
 
 ```env
-VITE_API_URL=https://nilasense-backend.onrender.com
-VITE_ML_API_URL=https://nilasense-ml.onrender.com
-```
-
-### Backend (.env)
-
-Buat di Render dashboard:
-
-```env
-# Server
-NODE_ENV=production
-PORT=5001
-
-# Database
-DATABASE_URL=postgresql://user:password@host:5432/database
+# Database (dari Supabase)
+DB_USER=postgres
+DB_HOST=aws-0-ap-southeast-1.pooler.supabase.com
+DB_DATABASE=postgres
+DB_PASSWORD=your_supabase_password
+DB_PORT=6543
 
 # JWT
-JWT_SECRET=your-super-secret-jwt-key-min-32-characters-long
+JWT_SECRET=your_super_secret_jwt_key_min_32_chars
 
-# CORS
-FRONTEND_URL=https://nilasense-frontend.vercel.app
+# ML Service (setelah deploy)
+ML_SERVICE_URL=https://nilasense-ml.onrender.com
 
 # Midtrans (Payment Gateway)
-MIDTRANS_SERVER_KEY=your-midtrans-server-key
-MIDTRANS_CLIENT_KEY=your-midtrans-client-key
+MIDTRANS_SERVER_KEY=your_midtrans_server_key
+MIDTRANS_CLIENT_KEY=your_midtrans_client_key
 MIDTRANS_IS_PRODUCTION=false
 
-# ML Service
-ML_API_URL=https://nilasense-ml.onrender.com
+# Email (Gmail SMTP)
+GMAIL_USER=your_email@gmail.com
+GMAIL_APP_PASSWORD=your_app_password
 
-# Upload (Opsional - jika pakai cloud storage)
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
+# Frontend URL (untuk CORS)
+FRONTEND_URL=https://nilasense.vercel.app
+
+# Node Environment
+NODE_ENV=production
 ```
 
-### ML Service (.env)
+### 4.4 Deploy
 
-Buat di Render dashboard:
+1. Klik **"Create Web Service"**
+2. Tunggu build selesai (5-10 menit)
+3. Catat URL backend: `https://nilasense-backend.onrender.com`
+
+---
+
+## 5. Deploy ML Service (Render)
+
+### 5.1 Buat Web Service Baru
+
+1. Di Render Dashboard, klik **"New +"** → **"Web Service"**
+2. Connect repository yang sama
+3. Konfigurasi:
+
+| Setting | Value |
+|---------|-------|
+| **Name** | `nilasense-ml` |
+| **Region** | Singapore |
+| **Branch** | `main` |
+| **Root Directory** | `ml-service` |
+| **Runtime** | Python 3 |
+| **Build Command** | `pip install -r requirements.txt` |
+| **Start Command** | `gunicorn --bind 0.0.0.0:$PORT run:app` |
+| **Instance Type** | Free |
+
+### 5.2 Environment Variables
 
 ```env
 FLASK_ENV=production
-PORT=5002
-BACKEND_URL=https://nilasense-backend.onrender.com
+FLASK_PORT=5002
+PYTHONUNBUFFERED=1
+```
+
+### 5.3 Update requirements.txt untuk Production
+
+Pastikan `requirements.txt` sudah include gunicorn:
+
+```txt
+gunicorn>=21.2.0
+```
+
+### 5.4 Deploy
+
+1. Klik **"Create Web Service"**
+2. Tunggu build selesai
+3. Catat URL: `https://nilasense-ml.onrender.com`
+
+### 5.5 Update Backend ML_SERVICE_URL
+
+Setelah ML Service deploy, update environment variable di Backend:
+
+```env
+ML_SERVICE_URL=https://nilasense-ml.onrender.com
 ```
 
 ---
 
-## 🔄 Update CORS di Backend
+## 6. Deploy Frontend (Vercel)
 
-Update `backend/server.js`:
+### 6.1 Import Project
+
+1. Login ke [Vercel Dashboard](https://vercel.com/dashboard)
+2. Klik **"Add New..."** → **"Project"**
+3. Import repository dari GitHub
+4. Pilih `nilasense-react-express-aseli`
+
+### 6.2 Konfigurasi Project
+
+| Setting | Value |
+|---------|-------|
+| **Framework Preset** | Vite |
+| **Root Directory** | `frontend` |
+| **Build Command** | `npm run build` |
+| **Output Directory** | `dist` |
+| **Install Command** | `npm install` |
+
+### 6.3 Environment Variables
+
+```env
+VITE_API_URL=https://nilasense-backend.onrender.com/api
+VITE_MIDTRANS_CLIENT_KEY=your_midtrans_client_key
+```
+
+### 6.4 Update api.js untuk Production
+
+Edit `frontend/src/services/api.js`:
+
+```javascript
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5001/api",
+});
+
+// ... rest of the code
+```
+
+### 6.5 Deploy
+
+1. Klik **"Deploy"**
+2. Tunggu build selesai (2-5 menit)
+3. Catat URL: `https://nilasense.vercel.app`
+
+---
+
+## 7. Konfigurasi Environment Variables
+
+### 7.1 Summary Environment Variables
+
+#### Backend (Render)
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DB_USER` | Database user | `postgres` |
+| `DB_HOST` | Supabase host | `aws-0-ap-southeast-1.pooler.supabase.com` |
+| `DB_DATABASE` | Database name | `postgres` |
+| `DB_PASSWORD` | Database password | `your_password` |
+| `DB_PORT` | Database port | `6543` |
+| `JWT_SECRET` | JWT secret key | `min_32_characters_secret` |
+| `ML_SERVICE_URL` | ML service URL | `https://nilasense-ml.onrender.com` |
+| `MIDTRANS_SERVER_KEY` | Midtrans server key | `Mid-server-xxx` |
+| `MIDTRANS_CLIENT_KEY` | Midtrans client key | `Mid-client-xxx` |
+| `MIDTRANS_IS_PRODUCTION` | Production mode | `false` |
+| `GMAIL_USER` | Gmail address | `email@gmail.com` |
+| `GMAIL_APP_PASSWORD` | Gmail app password | `xxxx xxxx xxxx xxxx` |
+| `FRONTEND_URL` | Frontend URL (CORS) | `https://nilasense.vercel.app` |
+| `NODE_ENV` | Environment | `production` |
+
+#### ML Service (Render)
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `FLASK_ENV` | Environment | `production` |
+| `FLASK_PORT` | Port | `5002` |
+| `PYTHONUNBUFFERED` | Python output | `1` |
+
+#### Frontend (Vercel)
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_API_URL` | Backend API URL | `https://nilasense-backend.onrender.com/api` |
+| `VITE_MIDTRANS_CLIENT_KEY` | Midtrans client key | `Mid-client-xxx` |
+
+---
+
+## 8. Post-Deployment Testing
+
+### 8.1 Test Backend API
+
+```bash
+# Health check
+curl https://nilasense-backend.onrender.com/
+
+# Expected response:
+# {"message":"Selamat datang di NilaSense Backend API!"}
+```
+
+### 8.2 Test ML Service
+
+```bash
+# Health check
+curl https://nilasense-ml.onrender.com/health
+
+# Expected response:
+# {"status":"healthy","model_loaded":true}
+```
+
+### 8.3 Test Frontend
+
+1. Buka `https://nilasense.vercel.app`
+2. Coba login dengan:
+   - Email: `admin@nilasense.com`
+   - Password: `admin123`
+
+### 8.4 Full Integration Test
+
+1. Register user baru
+2. Login
+3. Lihat produk
+4. Tambah ke keranjang
+5. Checkout
+6. Cek monitoring dashboard
+
+---
+
+## 9. Troubleshooting
+
+### 9.1 Backend tidak bisa connect ke database
+
+**Gejala**: Error `ECONNREFUSED` atau `connection timeout`
+
+**Solusi**:
+1. Pastikan connection string benar
+2. Gunakan **pooler connection** dari Supabase (port 6543)
+3. Cek apakah IP Render perlu di-whitelist
+
+### 9.2 CORS Error di Frontend
+
+**Gejala**: `Access-Control-Allow-Origin` error
+
+**Solusi**:
+1. Pastikan `FRONTEND_URL` di backend sudah benar
+2. Update `corsOptions` di `server.js`:
 
 ```javascript
 const corsOptions = {
   origin: [
-    'http://localhost:5173', // Local development
-    'https://nilasense-frontend.vercel.app', // Production frontend
-    'https://nilasense-frontend-*.vercel.app', // Vercel preview deployments
+    process.env.FRONTEND_URL,
+    /\.vercel\.app$/,
   ],
   credentials: true,
-  optionsSuccessStatus: 200
 };
-
-app.use(cors(corsOptions));
 ```
+
+### 9.3 ML Service crash on Render
+
+**Gejala**: Service keeps restarting
+
+**Solusi**:
+1. Cek logs di Render dashboard
+2. Pastikan `gunicorn` ada di `requirements.txt`
+3. Gunakan command: `gunicorn --bind 0.0.0.0:$PORT run:app`
+
+### 9.4 Build gagal di Vercel
+
+**Gejala**: Build error
+
+**Solusi**:
+1. Pastikan `Root Directory` = `frontend`
+2. Cek apakah ada error di `package.json`
+3. Clear cache dan redeploy
+
+### 9.5 JWT Token Error
+
+**Gejala**: `jwt malformed` atau `invalid signature`
+
+**Solusi**:
+1. Pastikan `JWT_SECRET` sama di semua environment
+2. Clear localStorage di browser
+3. Login ulang
+
+### 9.6 Render Free Tier Sleep
+
+**Gejala**: First request sangat lambat (15-30 detik)
+
+**Penjelasan**: Free tier Render akan sleep setelah 15 menit tidak ada aktivitas.
+
+**Solusi**:
+1. Upgrade ke paid tier, atau
+2. Setup uptime monitoring (UptimeRobot) untuk ping setiap 10 menit
 
 ---
 
-## ✅ Testing Setelah Deploy
+## Quick Reference
 
-### 1. Test Frontend
+### URLs
 
-```bash
-# Buka di browser
-https://nilasense-frontend.vercel.app
+| Service | URL |
+|---------|-----|
+| Frontend | `https://nilasense.vercel.app` |
+| Backend | `https://nilasense-backend.onrender.com` |
+| ML Service | `https://nilasense-ml.onrender.com` |
+| Database | Supabase Dashboard |
 
-# Test navigasi:
-- Homepage ✓
-- Login ✓
-- Register ✓
-- Products ✓
-- Cart ✓
-- Checkout ✓
-```
+### Default Credentials
 
-### 2. Test Backend API
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@nilasense.com` | `admin123` |
 
-```bash
-# Health check
-curl https://nilasense-backend.onrender.com/health
-
-# Test login
-curl -X POST https://nilasense-backend.onrender.com/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'
-
-# Test get products
-curl https://nilasense-backend.onrender.com/api/products
-```
-
-### 3. Test ML Service
+### Useful Commands
 
 ```bash
-# Health check
+# Check backend health
+curl https://nilasense-backend.onrender.com/
+
+# Check ML health
 curl https://nilasense-ml.onrender.com/health
 
-# Test prediction
-curl -X POST https://nilasense-ml.onrender.com/api/predict \
+# Test login API
+curl -X POST https://nilasense-backend.onrender.com/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"temperature":28,"ph":7.5,"dissolved_oxygen":6.5,"ammonia":0.5}'
-```
-
-### 4. Test End-to-End Flow
-
-1. **Register User**
-   - Buka frontend
-   - Register akun baru
-   - Cek email konfirmasi (jika ada)
-
-2. **Login**
-   - Login dengan akun yang dibuat
-   - Cek token tersimpan
-
-3. **Browse Products**
-   - Lihat daftar produk
-   - Cek gambar loading
-
-4. **Add to Cart**
-   - Tambahkan produk ke cart
-   - Cek cart count
-
-5. **Checkout**
-   - Proses checkout
-   - Test payment gateway (Midtrans sandbox)
-
-6. **Admin Dashboard** (jika login sebagai admin)
-   - Lihat dashboard
-   - Test CRUD operations
-   - Test ML prediction
-
----
-
-## 🐛 Troubleshooting
-
-### Frontend Issues
-
-**Problem: Build failed**
-```
-Error: Could not resolve dependencies
-```
-**Solution:**
-```bash
-cd frontend
-rm -rf node_modules package-lock.json
-npm install
-npm run build
-```
-
-**Problem: API calls failing (CORS error)**
-```
-Access to fetch blocked by CORS policy
-```
-**Solution:**
-- Cek VITE_API_URL di environment variables Vercel
-- Pastikan backend CORS origin include frontend URL
-- Clear cache dan hard reload browser
-
-**Problem: 404 on page refresh**
-```
-Cannot GET /products
-```
-**Solution:**
-- Pastikan `vercel.json` ada dengan rewrites
-- Atau tambahkan di Netlify: `_redirects` file:
-  ```
-  /*    /index.html   200
-  ```
-
----
-
-### Backend Issues
-
-**Problem: Database connection failed**
-```
-Error: connect ETIMEDOUT
-```
-**Solution:**
-- Cek DATABASE_URL format: `postgresql://user:pass@host:port/db`
-- Gunakan Internal Database URL jika di Render
-- Test koneksi:
-  ```javascript
-  const { Pool } = require('pg');
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  pool.query('SELECT NOW()', (err, res) => {
-    console.log(err, res);
-    pool.end();
-  });
-  ```
-
-**Problem: JWT verification failed**
-```
-Error: jwt malformed
-```
-**Solution:**
-- Pastikan JWT_SECRET sama panjangnya (min 32 char)
-- Generate baru:
-  ```bash
-  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-  ```
-
-**Problem: File upload not working**
-```
-Error: ENOENT no such file or directory
-```
-**Solution:**
-- Render free tier tidak support persistent storage
-- Gunakan Cloudinary untuk upload:
-  ```bash
-  npm install cloudinary multer-storage-cloudinary
-  ```
-
-**Problem: Service sleeping (cold start)**
-```
-Request timeout after 30s
-```
-**Solution:**
-- Render free tier sleeps after 15 min inactivity
-- Opsi 1: Upgrade ke paid plan ($7/month)
-- Opsi 2: Gunakan cron job untuk ping:
-  ```yaml
-  # render.yaml
-  services:
-    - type: cron
-      name: keep-alive
-      schedule: "*/10 * * * *"  # Every 10 minutes
-      command: curl https://nilasense-backend.onrender.com/health
-  ```
-- Opsi 3: Gunakan uptime monitoring (UptimeRobot, Pingdom)
-
----
-
-### ML Service Issues
-
-**Problem: Model file not found**
-```
-FileNotFoundError: model.pkl not found
-```
-**Solution:**
-- Pastikan model.pkl di-commit ke Git
-- Atau train model saat startup:
-  ```python
-  import os
-  if not os.path.exists('models/model.pkl'):
-      train_and_save_model()
-  ```
-
-**Problem: Memory limit exceeded**
-```
-Error: Container killed (OOM)
-```
-**Solution:**
-- Render free tier: 512MB RAM
-- Optimize model:
-  ```python
-  # Gunakan model lebih ringan
-  from sklearn.ensemble import RandomForestClassifier
-  model = RandomForestClassifier(n_estimators=50)  # Reduce from 100
-  ```
-- Atau gunakan model pre-trained lebih kecil
-
-**Problem: Slow predictions**
-```
-Request timeout
-```
-**Solution:**
-- Cache predictions:
-  ```python
-  from functools import lru_cache
-
-  @lru_cache(maxsize=100)
-  def predict_cached(temp, ph, do, ammonia):
-      return model.predict([[temp, ph, do, ammonia]])
-  ```
-
----
-
-### Database Issues
-
-**Problem: Migration failed**
-```
-ERROR: relation already exists
-```
-**Solution:**
-```sql
--- Drop existing tables (HATI-HATI!)
-DROP TABLE IF EXISTS orders CASCADE;
-DROP TABLE IF EXISTS products CASCADE;
--- Re-run migrations
-```
-
-**Problem: Connection pool exhausted**
-```
-Error: too many clients
-```
-**Solution:**
-```javascript
-// backend/config/database.js
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 5, // Limit untuk free tier
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+  -d '{"email":"admin@nilasense.com","password":"admin123"}'
 ```
 
 ---
 
-## 📊 Monitoring & Logs
-
-### Render Logs
-
-```bash
-# Via Dashboard
-1. Buka service
-2. Tab "Logs"
-3. Real-time streaming
-
-# Via CLI
-render logs -s nilasense-backend
-render logs -s nilasense-ml
-```
-
-### Vercel Logs
-
-```bash
-# Via CLI
-vercel logs
-
-# Via Dashboard
-Project > Deployments > Click deployment > Logs
-```
-
-### Database Monitoring
-
-**Supabase:**
-- Dashboard > Database > Logs
-- Real-time query performance
-
-**Render PostgreSQL:**
-- Dashboard > Database > Metrics
-- Connection count, CPU, Memory
-
----
-
-## 🔄 Auto-Deploy dari Git
-
-### Vercel
-✅ Auto-deploy enabled by default
-- Push ke `main` → Auto deploy
-- Push ke branch → Preview deploy
-
-### Render
-✅ Auto-deploy enabled by default
-- Push ke `main` → Auto deploy
-- Manual deploy juga available
-
-**Disable auto-deploy:**
-```
-Settings > Build & Deploy > Auto-Deploy: Off
-```
-
----
-
-## 💰 Estimasi Biaya
-
-### Free Tier Limits
-
-| Service | Platform | Free Limit | Setelah Limit |
-|---------|----------|------------|---------------|
-| Frontend | Vercel | 100GB bandwidth/month | $20/month untuk 1TB |
-| Backend | Render | 750 hours/month, sleeps after 15 min | $7/month untuk always on |
-| ML Service | Render | 750 hours/month | $7/month |
-| Database | Supabase | 500MB storage, 2GB bandwidth | $25/month |
-| Database | Render | 1GB storage, 90 days retention | $7/month untuk persistent |
-
-**Total Gratis:** ✅ $0/month (dengan batasan)
-**Total Jika Upgrade:** ~$25-40/month untuk always-on services
-
----
-
-## 🎓 Best Practices
-
-### 1. Environment Variables
-- ❌ Jangan commit `.env` files
-- ✅ Gunakan `.env.example` sebagai template
-- ✅ Rotate secrets secara berkala
-- ✅ Gunakan secrets manager untuk production
-
-### 2. Database
-- ✅ Selalu backup database
-- ✅ Gunakan migrations untuk schema changes
-- ✅ Index kolom yang sering di-query
-- ✅ Monitor connection pool
-
-### 3. Security
-- ✅ Gunakan HTTPS (auto di semua platform)
-- ✅ Enable CORS dengan origin spesifik
-- ✅ Rate limiting untuk API
-- ✅ Sanitize user input
-- ✅ Gunakan prepared statements (prevent SQL injection)
-
-### 4. Performance
-- ✅ Enable gzip compression
-- ✅ Cache static assets
-- ✅ Optimize images (use CDN)
-- ✅ Lazy load components di frontend
-- ✅ Database query optimization
-
-### 5. Monitoring
-- ✅ Setup error tracking (Sentry)
-- ✅ Monitor uptime (UptimeRobot)
-- ✅ Track performance metrics
-- ✅ Setup alerts untuk downtime
-
----
-
-## 📚 Resources
-
-### Platform Documentation
-- [Vercel Docs](https://vercel.com/docs)
-- [Render Docs](https://render.com/docs)
-- [Supabase Docs](https://supabase.com/docs)
-- [Netlify Docs](https://docs.netlify.com)
-
-### Tutorials
-- [Deploy React to Vercel](https://vercel.com/guides/deploying-react-with-vercel)
-- [Deploy Express to Render](https://render.com/docs/deploy-node-express-app)
-- [Deploy Flask to Render](https://render.com/docs/deploy-flask)
-
-### Community
-- [Vercel Community](https://github.com/vercel/vercel/discussions)
-- [Render Community](https://community.render.com)
-- [Stack Overflow](https://stackoverflow.com)
-
----
-
-## 🆘 Bantuan Lebih Lanjut
+## Support
 
 Jika mengalami masalah:
+1. Cek logs di masing-masing platform
+2. Pastikan semua environment variables sudah di-set
+3. Cek network tab di browser untuk error details
 
-1. **Cek Logs** - 90% masalah terlihat di logs
-2. **Cek Environment Variables** - Pastikan semua var terkonfigurasi
-3. **Test Local** - Reproduce issue di local environment
-4. **Baca Dokumentasi** - Platform docs sangat lengkap
-5. **Google Error Message** - Biasanya sudah ada solusinya
-6. **Ask Community** - Discord/Forum platform
-
----
-
-## ✨ Checklist Deployment
-
-### Pre-Deployment
-- [ ] Code di-push ke GitHub
-- [ ] Dependencies up-to-date
-- [ ] Environment variables documented
-- [ ] Database migrations ready
-- [ ] Local testing passed
-- [ ] Build locally successful
-
-### Frontend Deployment
-- [ ] Deploy ke Vercel/Netlify
-- [ ] Environment variables configured
-- [ ] Custom domain setup (opsional)
-- [ ] Test semua pages load
-- [ ] Test API calls work
-
-### Backend Deployment
-- [ ] Database created & configured
-- [ ] Database migrations executed
-- [ ] Backend deployed ke Render
-- [ ] Environment variables configured
-- [ ] CORS configured correctly
-- [ ] Test all endpoints
-
-### ML Service Deployment
-- [ ] ML service deployed ke Render
-- [ ] Model files uploaded/trained
-- [ ] Environment variables configured
-- [ ] Test prediction endpoints
-
-### Post-Deployment
-- [ ] End-to-end testing
-- [ ] Monitor logs for errors
-- [ ] Setup uptime monitoring
-- [ ] Document deployment URLs
-- [ ] Share with team/users
-
----
-
-**🎉 Selamat! Aplikasi NilaSense sudah berhasil di-deploy!**
-
-Untuk update selanjutnya, cukup push ke GitHub dan deployment akan otomatis.
-
-```bash
-git add .
-git commit -m "Update feature X"
-git push origin main
-```
-
----
-
-**Dibuat untuk NilaSense Project**
-_Marketplace Ikan Nila Premium Berbasis Teknologi IoT & AI_
+**Last Updated**: November 2024

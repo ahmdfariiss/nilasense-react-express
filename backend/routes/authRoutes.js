@@ -10,6 +10,9 @@ router.post("/register", authController.registerUser);
 // Endpoint untuk login user
 router.post("/login", authController.loginUser);
 
+// Endpoint untuk refresh token
+router.post("/refresh-token", authController.refreshToken);
+
 // Protected route
 router.get("/me", protect, authController.getMe);
 

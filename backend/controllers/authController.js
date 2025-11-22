@@ -39,6 +39,23 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+// Helper function untuk generate tokens
+const generateTokens = (payload) => {
+  // Access token - berlaku 7 hari
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+
+  // Refresh token - berlaku 30 hari
+  const refreshToken = jwt.sign(
+    { id: payload.id, type: "refresh" },
+    process.env.JWT_SECRET,
+    { expiresIn: "30d" }
+  );
+
+  return { accessToken, refreshToken };
+};
+
 // Fungsi untuk login user
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -76,22 +93,81 @@ exports.loginUser = async (req, res) => {
       pond_id: user.pond_id || null, // Include pond assignment for petambak
     };
 
-    // 5. Buat dan tandatangani token JWT
-    const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" } // Token akan valid selama 1 hari
-    );
+    // 5. Buat access token dan refresh token
+    const { accessToken, refreshToken } = generateTokens(payload);
 
-    // 6. Kirim token dan data user kembali ke client
+    // 6. Kirim tokens dan data user kembali ke client
     res.status(200).json({
       message: "Login berhasil",
-      token,
+      token: accessToken,
+      refreshToken,
       user: payload,
     });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    console.error("Login error:", error);
+    res.status(500).json({
+      message: "Terjadi kesalahan pada server",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
+  }
+};
+
+// Fungsi untuk refresh token
+exports.refreshToken = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({ message: "Refresh token diperlukan" });
+  }
+
+  try {
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+
+    // Pastikan ini adalah refresh token
+    if (decoded.type !== "refresh") {
+      return res.status(401).json({ message: "Token tidak valid" });
+    }
+
+    // Ambil data user terbaru dari database
+    const userResult = await db.query("SELECT * FROM users WHERE id = $1", [
+      decoded.id,
+    ]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({ message: "User tidak ditemukan" });
+    }
+
+    const user = userResult.rows[0];
+
+    // Generate payload baru dengan data terbaru
+    const payload = {
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      pond_id: user.pond_id || null,
+    };
+
+    // Generate tokens baru
+    const tokens = generateTokens(payload);
+
+    res.status(200).json({
+      message: "Token berhasil diperbarui",
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: payload,
+    });
+  } catch (error) {
+    console.error("Refresh token error:", error.message);
+
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        message: "Refresh token sudah kadaluarsa, silakan login kembali",
+        expired: true,
+      });
+    }
+
+    res.status(401).json({ message: "Token tidak valid" });
   }
 };
 
