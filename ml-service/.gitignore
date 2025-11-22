@@ -31,16 +31,16 @@ env/
 .ipynb_checkpoints
 *.ipynb_checkpoints/
 
-# Model files (large binary files)
-models/trained/*.pkl
-models/trained/*.h5
-models/trained/*.joblib
-models/trained/*.pt
-models/trained/*.pth
+# Model files (large binary files) - COMMENTED OUT for deployment
+# Uncomment below lines if model files are too large (>100MB)
+# models/trained/*.pkl
+# models/trained/*.h5
+# models/trained/*.joblib
+# models/trained/*.pt
+# models/trained/*.pth
 
-# Keep model info
-!models/trained/model_info.json
-!models/trained/.gitkeep
+# Keep all model files for deployment
+# The trained model files are needed for production
 
 # Logs
 logs/
