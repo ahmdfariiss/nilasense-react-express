@@ -66,14 +66,14 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
   const fetchQuickStats = async () => {
     try {
       setLoading(true);
-      
+
       // Get accessible ponds
       const pondsResult = await pondService.getAccessiblePonds();
       if (!pondsResult.success || pondsResult.data.length === 0) {
         setQuickStats({
           waterQuality: null,
           feedSchedule: null,
-          error: "Belum ada kolam yang tersedia"
+          error: "Belum ada kolam yang tersedia",
         });
         return;
       }
@@ -86,19 +86,19 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
         // Get latest water quality data and feed summary in parallel
         const [waterResult, feedResult] = await Promise.all([
           monitoringService.getLatestWaterQuality(defaultPond.id),
-          feedService.getTodayFeedSummary(defaultPond.id)
+          feedService.getTodayFeedSummary(defaultPond.id),
         ]);
-        
+
         let waterQualityStats = null;
         if (waterResult.success && waterResult.data) {
           const latest = waterResult.data;
           const overallStatus = getOverallWaterStatus(latest);
-          
+
           waterQualityStats = {
             suhu: `${latest.temperature}°C`,
             ph: latest.ph_level.toString(),
             status: overallStatus,
-            lastUpdate: getRelativeTime(latest.logged_at)
+            lastUpdate: getRelativeTime(latest.logged_at),
           };
         }
 
@@ -107,35 +107,37 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
         if (feedResult.success && feedResult.data) {
           const summary = feedResult.data;
           feedScheduleStats = {
-            nextFeed: summary.nextFeedTime ? summary.nextFeedTime.substring(0, 5) : '--:--',
+            nextFeed: summary.nextFeedTime
+              ? summary.nextFeedTime.substring(0, 5)
+              : "--:--",
             todayTotal: `${summary.totalAmount || 0} kg`,
-            status: summary.status || 'Belum ada jadwal',
-            lastUpdate: summary.nextFeedTime ? 
-              feedService.getRelativeTime(summary.nextFeedTime) : 
-              'Belum ada data'
+            status: summary.status || "Belum ada jadwal",
+            lastUpdate: summary.nextFeedTime
+              ? feedService.getRelativeTime(summary.nextFeedTime)
+              : "Belum ada data",
           };
         } else {
           // Fallback if no feed data
           feedScheduleStats = {
-            nextFeed: '--:--',
-            todayTotal: '0 kg',
-            status: 'Belum ada jadwal',
-            lastUpdate: 'Belum ada data'
+            nextFeed: "--:--",
+            todayTotal: "0 kg",
+            status: "Belum ada jadwal",
+            lastUpdate: "Belum ada data",
           };
         }
 
         setQuickStats({
           waterQuality: waterQualityStats,
           feedSchedule: feedScheduleStats,
-          pondName: defaultPond.name
+          pondName: defaultPond.name,
         });
       }
     } catch (error) {
-      console.error('Error fetching quick stats:', error);
+      console.error("Error fetching quick stats:", error);
       setQuickStats({
         waterQuality: null,
         feedSchedule: null,
-        error: "Gagal memuat data"
+        error: "Gagal memuat data",
       });
     } finally {
       setLoading(false);
@@ -144,28 +146,31 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
 
   const getOverallWaterStatus = (log) => {
     const statuses = [
-      monitoringService.getWaterQualityStatus(log.temperature, 'temperature'),
-      monitoringService.getWaterQualityStatus(log.ph_level, 'ph_level'),
-      monitoringService.getWaterQualityStatus(log.dissolved_oxygen, 'dissolved_oxygen'),
-      monitoringService.getWaterQualityStatus(log.turbidity, 'turbidity')
+      monitoringService.getWaterQualityStatus(log.temperature, "temperature"),
+      monitoringService.getWaterQualityStatus(log.ph_level, "ph_level"),
+      monitoringService.getWaterQualityStatus(
+        log.dissolved_oxygen,
+        "dissolved_oxygen"
+      ),
+      monitoringService.getWaterQualityStatus(log.turbidity, "turbidity"),
     ];
 
-    if (statuses.includes('warning')) return 'Perhatian';
-    if (statuses.includes('good')) return 'Sangat Baik';
-    return 'Normal';
+    if (statuses.includes("warning")) return "Perhatian";
+    if (statuses.includes("good")) return "Sangat Baik";
+    return "Normal";
   };
 
   const getRelativeTime = (timestamp) => {
     const now = new Date();
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor((now - time) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Baru saja';
+
+    if (diffInMinutes < 1) return "Baru saja";
     if (diffInMinutes < 60) return `${diffInMinutes} menit yang lalu`;
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours} jam yang lalu`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     return `${diffInDays} hari yang lalu`;
   };
@@ -197,11 +202,13 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
   // Dashboard view - simple navigation hub
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-foreground mb-2">Dashboard Monitoring</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-foreground text-2xl sm:text-3xl font-bold mb-2">
+            Dashboard Monitoring
+          </h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Pantau kondisi kolam Anda dengan mudah
             {selectedPond && (
               <span className="ml-2 text-primary font-medium">
@@ -229,140 +236,170 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
             </Card>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Water Quality Quick Stats */}
-          <Card className="border-l-4 border-l-[#0891b2] hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => setCurrentView("water")}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#0891b2]/10 rounded-lg">
-                    <Droplet className="w-6 h-6 text-[#0891b2]" />
-                  </div>
-                  <div>
-                    <h3 className="text-foreground font-semibold">Kualitas Air</h3>
-                    <p className="text-muted-foreground text-sm">
-                      Update: {quickStats?.waterQuality?.lastUpdate || 'Belum ada data'}
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="w-5 h-5 text-muted-foreground" />
-              </div>
-              
-              {quickStats?.waterQuality ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-muted-foreground text-sm">Suhu</p>
-                      <p className="text-foreground font-semibold text-lg">
-                        {quickStats.waterQuality.suhu}
-                      </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 mb-6 sm:mb-8">
+            {/* Water Quality Quick Stats */}
+            <Card
+              className="border-l-4 border-l-[#0891b2] hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setCurrentView("water")}
+            >
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-[#0891b2]/10 rounded-lg shrink-0">
+                      <Droplet className="w-6 h-6 text-[#0891b2]" />
                     </div>
-                    <div>
-                      <p className="text-muted-foreground text-sm">pH</p>
-                      <p className="text-foreground font-semibold text-lg">
-                        {quickStats.waterQuality.ph}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-foreground font-semibold text-base sm:text-lg mb-1">
+                        Kualitas Air
+                      </h3>
+                      <p className="text-muted-foreground text-xs sm:text-sm">
+                        Update:{" "}
+                        {quickStats?.waterQuality?.lastUpdate ||
+                          "Belum ada data"}
                       </p>
                     </div>
                   </div>
-                  
-                  {getStatusBadge(quickStats.waterQuality.status)}
-                </>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground text-sm">Belum ada data monitoring</p>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
                 </div>
-              )}
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full mt-4"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentView("water");
-                }}
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Lihat Detail Monitoring
-              </Button>
-            </CardContent>
-          </Card>
 
-          {/* Feed Schedule Quick Stats */}
-          <Card className="border-l-4 border-l-[#f59e0b] hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => setCurrentView("feed")}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#f59e0b]/10 rounded-lg">
-                    <UtensilsCrossed className="w-6 h-6 text-[#f59e0b]" />
+                {quickStats?.waterQuality ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-muted-foreground text-sm mb-1">
+                          Suhu
+                        </p>
+                        <p className="text-foreground font-bold text-xl">
+                          {quickStats.waterQuality.suhu}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-sm mb-1">pH</p>
+                        <p className="text-foreground font-bold text-xl">
+                          {quickStats.waterQuality.ph}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      {getStatusBadge(quickStats.waterQuality.status)}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-muted-foreground text-sm">
+                      Belum ada data monitoring
+                    </p>
+                  </div>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentView("water");
+                  }}
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Lihat Detail Monitoring
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Feed Schedule Quick Stats */}
+            <Card
+              className="border-l-4 border-l-[#f59e0b] hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setCurrentView("feed")}
+            >
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-[#f59e0b]/10 rounded-lg shrink-0">
+                      <UtensilsCrossed className="w-6 h-6 text-[#f59e0b]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-foreground font-semibold text-base sm:text-lg mb-1">
+                        Jadwal Pakan
+                      </h3>
+                      <p className="text-muted-foreground text-xs sm:text-sm">
+                        Update:{" "}
+                        {quickStats?.feedSchedule?.lastUpdate ||
+                          "Belum ada data"}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-muted-foreground text-sm mb-1">
+                      Jadwal Berikutnya
+                    </p>
+                    <p className="text-foreground font-bold text-xl">
+                      {quickStats?.feedSchedule?.nextFeed || "-"}
+                    </p>
                   </div>
                   <div>
-                    <h3 className="text-foreground font-semibold">Jadwal Pakan</h3>
-                    <p className="text-muted-foreground text-sm">
-                      Update: {quickStats?.feedSchedule?.lastUpdate || 'Belum ada data'}
+                    <p className="text-muted-foreground text-sm mb-1">
+                      Total Hari Ini
+                    </p>
+                    <p className="text-foreground font-bold text-xl">
+                      {quickStats?.feedSchedule?.todayTotal || "-"}
                     </p>
                   </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-muted-foreground" />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-muted-foreground text-sm">Jadwal Berikutnya</p>
-                  <p className="text-foreground font-semibold text-lg">
-                    {quickStats?.feedSchedule?.nextFeed || '-'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-sm">Total Hari Ini</p>
-                  <p className="text-foreground font-semibold text-lg">
-                    {quickStats?.feedSchedule?.todayTotal || '-'}
-                  </p>
-                </div>
-              </div>
-              
-              {quickStats?.feedSchedule && getStatusBadge(quickStats.feedSchedule.status)}
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full mt-4"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentView("feed");
-                }}
-              >
-                <Clock className="w-4 h-4 mr-2" />
-                Lihat Jadwal Lengkap
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+
+                {quickStats?.feedSchedule && (
+                  <div className="mb-4">
+                    {getStatusBadge(quickStats.feedSchedule.status)}
+                  </div>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentView("feed");
+                  }}
+                >
+                  <Clock className="w-4 h-4 mr-2" />
+                  Lihat Jadwal Lengkap
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Quick Access Navigation */}
         <Card>
-          <CardHeader>
-            <CardTitle>Menu Monitoring</CardTitle>
+          <CardHeader className="p-5 sm:p-6 pb-3">
+            <CardTitle className="text-lg sm:text-xl mb-1">
+              Menu Monitoring
+            </CardTitle>
             <p className="text-muted-foreground text-sm">
               Pilih menu untuk melihat data monitoring secara detail
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-5 sm:p-6 pt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Button 
-                variant="outline" 
-                className="h-auto p-6 justify-start"
+              <Button
+                variant="outline"
+                className="h-auto p-5 sm:p-6 justify-start hover:bg-accent transition-colors"
                 onClick={() => setCurrentView("water")}
               >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-[#0891b2]/10 rounded-lg">
+                <div className="flex items-center gap-4 w-full">
+                  <div className="p-3 bg-[#0891b2]/10 rounded-lg shrink-0">
                     <Droplet className="w-8 h-8 text-[#0891b2]" />
                   </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold">Monitoring Kualitas Air</h3>
+                  <div className="text-left flex-1 min-w-0">
+                    <h3 className="font-semibold text-base mb-1">
+                      Monitoring Kualitas Air
+                    </h3>
                     <p className="text-muted-foreground text-sm">
                       Suhu, pH, oksigen, dan kekeruhan air
                     </p>
@@ -370,17 +407,19 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
                 </div>
               </Button>
 
-              <Button 
-                variant="outline" 
-                className="h-auto p-6 justify-start"
+              <Button
+                variant="outline"
+                className="h-auto p-5 sm:p-6 justify-start hover:bg-accent transition-colors"
                 onClick={() => setCurrentView("feed")}
               >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-[#f59e0b]/10 rounded-lg">
+                <div className="flex items-center gap-4 w-full">
+                  <div className="p-3 bg-[#f59e0b]/10 rounded-lg shrink-0">
                     <UtensilsCrossed className="w-8 h-8 text-[#f59e0b]" />
                   </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold">Jadwal Pemberian Pakan</h3>
+                  <div className="text-left flex-1 min-w-0">
+                    <h3 className="font-semibold text-base mb-1">
+                      Jadwal Pemberian Pakan
+                    </h3>
                     <p className="text-muted-foreground text-sm">
                       Jadwal otomatis dan manual pakan
                     </p>
@@ -394,4 +433,3 @@ export function UserMonitoringPage({ initialView = "dashboard" }) {
     </div>
   );
 }
-

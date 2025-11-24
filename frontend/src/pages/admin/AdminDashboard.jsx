@@ -391,7 +391,7 @@ export function AdminDashboard({ onNavigate }) {
           onNavigate={onNavigate}
           currentPage="admin-dashboard"
         />
-        <div className="flex-1 lg:ml-64 flex items-center justify-center">
+        <div className="flex-1 ml-64 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Memuat dashboard...</p>
@@ -404,13 +404,15 @@ export function AdminDashboard({ onNavigate }) {
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar onNavigate={onNavigate} currentPage="admin-dashboard" />
-      <div className="flex-1 lg:ml-64">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex-1 ml-64">
+        <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Header */}
-          <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-foreground text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">Dashboard Overview</h1>
-              <p className="text-muted-foreground text-sm sm:text-base">
+              <h1 className="text-foreground text-3xl font-bold mb-2">
+                Dashboard Overview
+              </h1>
+              <p className="text-muted-foreground text-base">
                 Selamat datang kembali! Berikut ringkasan kondisi tambak Anda
                 hari ini.
               </p>
@@ -419,7 +421,6 @@ export function AdminDashboard({ onNavigate }) {
               variant="outline"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="w-full sm:w-auto"
             >
               <RefreshCw
                 className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
@@ -430,19 +431,19 @@ export function AdminDashboard({ onNavigate }) {
 
           {/* Pond Selection */}
           {ponds.length > 0 && (
-            <Card className="mb-4 sm:mb-6">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                  <Waves className="w-5 h-5 sm:w-6 sm:h-6 text-primary hidden sm:block" />
+            <Card className="mb-6">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <Waves className="w-6 h-6 text-primary" />
                   <div className="flex-1">
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">
+                    <p className="text-sm text-muted-foreground mb-2">
                       Kolam yang dipantau
                     </p>
                     <Select
                       value={selectedPondId?.toString()}
                       onValueChange={handlePondChange}
                     >
-                      <SelectTrigger className="w-full md:w-[300px]">
+                      <SelectTrigger className="w-[350px]">
                         <SelectValue placeholder="Pilih kolam" />
                       </SelectTrigger>
                       <SelectContent>
@@ -476,42 +477,45 @@ export function AdminDashboard({ onNavigate }) {
           ) : (
             <>
               {/* Main Metrics */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              <div className="grid grid-cols-4 gap-6 mb-8">
                 <Card className="border-l-4 border-l-[#0891b2]">
-                  <CardContent className="p-4 sm:p-6">
+                  <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-muted-foreground text-xs sm:text-sm">
+                      <p className="text-muted-foreground text-sm">
                         Status Kualitas Air
                         {mlPrediction && (
-                          <span className="ml-1 sm:ml-2 text-xs hidden sm:inline">(ML Prediction)</span>
+                          <span className="ml-2 text-xs text-primary">
+                            (ML Prediction)
+                          </span>
                         )}
                       </p>
-                      <Droplet className="w-4 h-4 sm:w-5 sm:h-5 text-[#0891b2]" />
+                      <Droplet className="w-5 h-5 text-[#0891b2]" />
                     </div>
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <p className="text-foreground text-lg sm:text-xl md:text-2xl font-bold">
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-foreground text-2xl font-bold">
                         {getWaterQualityStatus()}
                       </p>
                       {mlPrediction && getMLQualityBadge(mlPrediction.quality)}
                     </div>
                     {mlPrediction && mlPrediction.confidence && (
-                      <p className="text-muted-foreground mb-2 text-xs sm:text-sm">
-                        Confidence: {(mlPrediction.confidence * 100).toFixed(2)}%
+                      <p className="text-muted-foreground mb-2 text-sm">
+                        Confidence: {(mlPrediction.confidence * 100).toFixed(2)}
+                        %
                       </p>
                     )}
                     <div className="flex items-center gap-1 mt-2">
                       {waterQualityData ? (
                         <>
-                          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-[#10b981]" />
-                          <span className="text-[#10b981] text-xs sm:text-sm">
+                          <CheckCircle className="w-4 h-4 text-[#10b981]" />
+                          <span className="text-[#10b981] text-sm">
                             Data terbaru tersedia
-                            <span className="hidden sm:inline">{mlPrediction ? " • ML Analysis" : " • Rule-based"}</span>
+                            {mlPrediction ? " • ML Analysis" : " • Rule-based"}
                           </span>
                         </>
                       ) : (
                         <>
-                          <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-[#f59e0b]" />
-                          <span className="text-[#f59e0b] text-xs sm:text-sm">
+                          <AlertCircle className="w-4 h-4 text-[#f59e0b]" />
+                          <span className="text-[#f59e0b] text-sm">
                             Belum ada data
                           </span>
                         </>
@@ -521,35 +525,43 @@ export function AdminDashboard({ onNavigate }) {
                 </Card>
 
                 <Card className="border-l-4 border-l-[#f59e0b]">
-                  <CardContent className="p-4 sm:p-6">
+                  <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-muted-foreground text-xs sm:text-sm">
+                      <p className="text-muted-foreground text-sm">
                         Jadwal Pakan Berikutnya
                       </p>
-                      <UtensilsCrossed className="w-4 h-4 sm:w-5 sm:h-5 text-[#f59e0b]" />
+                      <UtensilsCrossed className="w-5 h-5 text-[#f59e0b]" />
                     </div>
-                    <p className="text-foreground text-lg sm:text-xl md:text-2xl font-bold">
+                    <p className="text-foreground text-2xl font-bold">
                       {getNextFeedTime()}
                     </p>
-                    <p className="text-muted-foreground text-xs sm:text-sm">
+                    <p className="text-muted-foreground text-sm">
                       {feedSummary?.nextFeedTime
-                        ? `Pukul ${feedSummary.nextFeedTime.substring(0, 5)} WIB`
+                        ? `Pukul ${feedSummary.nextFeedTime.substring(
+                            0,
+                            5
+                          )} WIB`
                         : "Belum ada jadwal"}
                     </p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-l-4 border-l-[#10b981]">
-                  <CardContent className="p-4 sm:p-6">
+                  <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-muted-foreground text-xs sm:text-sm">Pesanan Baru</p>
-                      <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-[#10b981]" />
+                      <p className="text-muted-foreground text-sm">
+                        Pesanan Baru
+                      </p>
+                      <ShoppingBag className="w-5 h-5 text-[#10b981]" />
                     </div>
-                    <p className="text-foreground text-lg sm:text-xl md:text-2xl font-bold">
-                      {recentOrders.filter((o) => o.status !== "Selesai").length}
+                    <p className="text-foreground text-2xl font-bold">
+                      {
+                        recentOrders.filter((o) => o.status !== "Selesai")
+                          .length
+                      }
                     </p>
                     <div className="flex items-center gap-1 mt-2">
-                      <span className="text-muted-foreground text-xs sm:text-sm">
+                      <span className="text-muted-foreground text-sm">
                         Menunggu diproses
                       </span>
                     </div>
@@ -557,26 +569,30 @@ export function AdminDashboard({ onNavigate }) {
                 </Card>
 
                 <Card className="border-l-4 border-l-[#8b5cf6]">
-                  <CardContent className="p-4 sm:p-6">
+                  <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-muted-foreground text-xs sm:text-sm">Stok Produk</p>
-                      <Package className="w-4 h-4 sm:w-5 sm:h-5 text-[#8b5cf6]" />
+                      <p className="text-muted-foreground text-sm">
+                        Stok Produk
+                      </p>
+                      <Package className="w-5 h-5 text-[#8b5cf6]" />
                     </div>
-                    <p className="text-foreground text-lg sm:text-xl md:text-2xl font-bold">
-                      {productsStats ? `${productsStats.totalStock.toFixed(0)} kg` : "N/A"}
+                    <p className="text-foreground text-2xl font-bold">
+                      {productsStats
+                        ? `${productsStats.totalStock.toFixed(0)} kg`
+                        : "N/A"}
                     </p>
                     <div className="flex items-center gap-1 mt-2">
                       {productsStats && productsStats.lowStock > 0 ? (
                         <>
-                          <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-[#f59e0b]" />
-                          <span className="text-[#f59e0b] text-xs sm:text-sm">
+                          <TrendingDown className="w-4 h-4 text-[#f59e0b]" />
+                          <span className="text-[#f59e0b] text-sm">
                             {productsStats.lowStock} produk stok rendah
                           </span>
                         </>
                       ) : (
                         <>
-                          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-[#10b981]" />
-                          <span className="text-[#10b981] text-xs sm:text-sm">
+                          <CheckCircle className="w-4 h-4 text-[#10b981]" />
+                          <span className="text-[#10b981] text-sm">
                             Stok aman
                           </span>
                         </>
@@ -586,18 +602,20 @@ export function AdminDashboard({ onNavigate }) {
                 </Card>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              <div className="grid grid-cols-2 gap-6 mb-8">
                 {/* Water Quality Trend Chart */}
                 <Card>
-                  <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="text-base sm:text-lg">Tren Kualitas Air (24 Jam)</CardTitle>
-                    <p className="text-muted-foreground text-xs sm:text-sm">
+                  <CardHeader className="p-6">
+                    <CardTitle className="text-lg">
+                      Tren Kualitas Air (24 Jam)
+                    </CardTitle>
+                    <p className="text-muted-foreground text-sm">
                       Monitoring suhu dan pH air secara real-time
                     </p>
                   </CardHeader>
-                  <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                  <CardContent className="p-6 pt-0">
                     {waterQualityTrend.length > 0 ? (
-                      <div className="h-48 sm:h-64">
+                      <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={waterQualityTrend}>
                             <CartesianGrid
@@ -607,62 +625,58 @@ export function AdminDashboard({ onNavigate }) {
                             <XAxis
                               dataKey="date"
                               stroke="#64748b"
-                              style={{ fontSize: "10px" }}
-                              tick={{ fontSize: 10 }}
+                              style={{ fontSize: "12px" }}
                             />
                             <YAxis
                               stroke="#64748b"
-                              style={{ fontSize: "10px" }}
-                              tick={{ fontSize: 10 }}
-                              width={30}
+                              style={{ fontSize: "12px" }}
                             />
                             <Tooltip
                               contentStyle={{
                                 backgroundColor: "white",
                                 border: "1px solid #cbd5e1",
                                 borderRadius: "8px",
-                                fontSize: "12px",
                               }}
                             />
                             <Line
                               type="monotone"
                               dataKey="suhu"
                               stroke="#0891b2"
-                              strokeWidth={2}
+                              strokeWidth={3}
                               name="Suhu (°C)"
-                              dot={{ fill: "#0891b2", r: 2 }}
+                              dot={{ fill: "#0891b2", r: 4 }}
                             />
                             <Line
                               type="monotone"
                               dataKey="ph"
                               stroke="#10b981"
-                              strokeWidth={2}
+                              strokeWidth={3}
                               name="pH"
-                              dot={{ fill: "#10b981", r: 2 }}
+                              dot={{ fill: "#10b981", r: 4 }}
                             />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
                     ) : (
-                      <div className="h-48 sm:h-64 flex items-center justify-center">
+                      <div className="h-64 flex items-center justify-center">
                         <div className="text-center">
-                          <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-2" />
+                          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
                           <p className="text-muted-foreground text-sm">
                             Belum ada data monitoring
                           </p>
                         </div>
                       </div>
                     )}
-                    <div className="flex gap-3 sm:gap-4 mt-3 sm:mt-4 justify-center">
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#0891b2]" />
-                        <span className="text-muted-foreground text-xs sm:text-sm">
+                    <div className="flex gap-4 mt-4 justify-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-[#0891b2]" />
+                        <span className="text-muted-foreground text-sm">
                           Suhu (°C)
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#10b981]" />
-                        <span className="text-muted-foreground text-xs sm:text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-[#10b981]" />
+                        <span className="text-muted-foreground text-sm">
                           pH
                         </span>
                       </div>
@@ -672,42 +686,42 @@ export function AdminDashboard({ onNavigate }) {
 
                 {/* ML Prediction & AI Analysis Card */}
                 <Card>
-                  <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                      <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  <CardHeader className="p-6">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <TrendingUp className="w-5 h-5 text-primary" />
                       {mlPrediction
                         ? "Analisis ML Kualitas Air"
                         : "Analisis Tren Kualitas Air"}
                     </CardTitle>
-                    <p className="text-muted-foreground text-xs sm:text-sm">
+                    <p className="text-muted-foreground text-sm">
                       {mlPrediction
                         ? "Hasil prediksi Machine Learning berdasarkan data terbaru"
                         : "Berdasarkan data monitoring terkini"}
                     </p>
                   </CardHeader>
-                  <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                  <CardContent className="p-6 pt-0">
                     {mlPrediction ? (
                       <>
                         {/* ML Prediction Summary */}
-                        <div className="space-y-3 sm:space-y-4 mb-3 sm:mb-4">
+                        <div className="space-y-4 mb-4">
                           {/* Quality & Confidence */}
-                          <div className="flex items-center justify-between p-2.5 sm:p-3 bg-primary/10 rounded-lg border border-primary/20">
+                          <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
                             <div>
-                              <p className="text-xs sm:text-sm text-muted-foreground">
+                              <p className="text-sm text-muted-foreground">
                                 Kualitas Air
                               </p>
-                              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <p className="text-base sm:text-lg font-bold">
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className="text-lg font-bold">
                                   {mlPrediction.quality}
                                 </p>
                                 {getMLQualityBadge(mlPrediction.quality)}
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-xs sm:text-sm text-muted-foreground">
+                              <p className="text-sm text-muted-foreground">
                                 Confidence
                               </p>
-                              <p className="text-base sm:text-lg font-bold text-primary">
+                              <p className="text-lg font-bold text-primary">
                                 {(mlPrediction.confidence * 100).toFixed(1)}%
                               </p>
                             </div>
@@ -716,8 +730,8 @@ export function AdminDashboard({ onNavigate }) {
                           {/* Issues Summary */}
                           {mlPrediction.issues &&
                             mlPrediction.issues.length > 0 && (
-                              <div className="p-2.5 sm:p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                                <p className="text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-amber-900 dark:text-amber-200">
+                              <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                <p className="text-sm font-semibold mb-2 text-amber-900 dark:text-amber-200">
                                   Masalah Terdeteksi:
                                 </p>
                                 <ul className="space-y-1">
@@ -726,14 +740,15 @@ export function AdminDashboard({ onNavigate }) {
                                     .map((issue, idx) => (
                                       <li
                                         key={idx}
-                                        className="text-xs sm:text-sm text-amber-800 dark:text-amber-300"
+                                        className="text-sm text-amber-800 dark:text-amber-300"
                                       >
                                         • {issue}
                                       </li>
                                     ))}
                                   {mlPrediction.issues.length > 3 && (
                                     <li className="text-xs text-amber-600 dark:text-amber-400">
-                                      +{mlPrediction.issues.length - 3} masalah lainnya
+                                      +{mlPrediction.issues.length - 3} masalah
+                                      lainnya
                                     </li>
                                   )}
                                 </ul>
@@ -743,8 +758,8 @@ export function AdminDashboard({ onNavigate }) {
                           {/* Top Recommendations */}
                           {mlPrediction.recommendations &&
                             mlPrediction.recommendations.length > 0 && (
-                              <div className="p-2.5 sm:p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                <p className="text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 text-blue-900 dark:text-blue-200">
+                              <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <p className="text-sm font-semibold mb-2 text-blue-900 dark:text-blue-200">
                                   Rekomendasi Utama:
                                 </p>
                                 <ol className="space-y-1">
@@ -753,14 +768,15 @@ export function AdminDashboard({ onNavigate }) {
                                     .map((rec, idx) => (
                                       <li
                                         key={idx}
-                                        className="text-xs sm:text-sm text-blue-800 dark:text-blue-300"
+                                        className="text-sm text-blue-800 dark:text-blue-300"
                                       >
                                         {idx + 1}. {rec}
                                       </li>
                                     ))}
                                   {mlPrediction.recommendations.length > 2 && (
                                     <li className="text-xs text-blue-600 dark:text-blue-400">
-                                      +{mlPrediction.recommendations.length - 2} rekomendasi lainnya
+                                      +{mlPrediction.recommendations.length - 2}{" "}
+                                      rekomendasi lainnya
                                     </li>
                                   )}
                                 </ol>
@@ -769,34 +785,38 @@ export function AdminDashboard({ onNavigate }) {
                         </div>
                       </>
                     ) : (
-                      <div className="space-y-2 sm:space-y-3">
+                      <div className="space-y-3">
                         {aiPredictions.map((prediction, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between p-2.5 sm:p-3 bg-muted/50 rounded-lg gap-2"
+                            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg gap-2"
                           >
                             <div className="flex-1 min-w-0">
-                              <p className="text-foreground text-sm sm:text-base mb-0.5 sm:mb-1 truncate">
+                              <p className="text-foreground text-base mb-1 truncate">
                                 {prediction.parameter}
                               </p>
-                              <p className="text-muted-foreground text-xs sm:text-sm truncate">
+                              <p className="text-muted-foreground text-sm truncate">
                                 {prediction.prediction}
                               </p>
                             </div>
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               {prediction.trend === "increasing" && (
-                                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#f59e0b]" />
+                                <TrendingUp className="w-4 h-4 text-[#f59e0b]" />
                               )}
                               {prediction.trend === "decreasing" && (
-                                <TrendingDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ef4444]" />
+                                <TrendingDown className="w-4 h-4 text-[#ef4444]" />
                               )}
                               {prediction.trend === "stable" && (
-                                <div className="w-3.5 sm:w-4 h-0.5 bg-[#10b981]" />
+                                <div className="w-4 h-0.5 bg-[#10b981]" />
                               )}
                               <Badge
-                                className={`${getStatusColor(prediction.status)} text-xs`}
+                                className={`${getStatusColor(
+                                  prediction.status
+                                )} text-xs`}
                               >
-                                {prediction.status === "good" ? "Baik" : "Perhatian"}
+                                {prediction.status === "good"
+                                  ? "Baik"
+                                  : "Perhatian"}
                               </Badge>
                             </div>
                           </div>
@@ -805,12 +825,11 @@ export function AdminDashboard({ onNavigate }) {
                     )}
                     <Button
                       variant="outline"
-                      className="w-full mt-3 sm:mt-4 text-xs sm:text-sm"
+                      className="w-full mt-4"
                       onClick={() => onNavigate("water-monitoring")}
                     >
-                      <span className="hidden sm:inline">Lihat Detail Monitoring & Analisis Lengkap</span>
-                      <span className="sm:hidden">Lihat Detail Monitoring</span>
-                      <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
+                      Lihat Detail Monitoring & Analisis Lengkap
+                      <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
                   </CardContent>
                 </Card>
@@ -818,98 +837,72 @@ export function AdminDashboard({ onNavigate }) {
 
               {/* Recent Orders */}
               <Card>
-                <CardHeader className="p-4 sm:p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <CardHeader className="p-6">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-base sm:text-lg">Pesanan Terbaru</CardTitle>
-                      <p className="text-muted-foreground text-xs sm:text-sm">
+                      <CardTitle className="text-lg">Pesanan Terbaru</CardTitle>
+                      <p className="text-muted-foreground text-sm">
                         5 pesanan terakhir yang masuk
                       </p>
                     </div>
                     <Button
                       variant="outline"
                       onClick={() => onNavigate("orders")}
-                      className="w-full sm:w-auto text-xs sm:text-sm"
                     >
                       Lihat Semua
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                <CardContent className="p-6 pt-0">
                   {recentOrders.length === 0 ? (
-                    <div className="text-center py-6 sm:py-8 text-muted-foreground">
-                      <ShoppingBag className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-20" />
+                    <div className="text-center py-8 text-muted-foreground">
+                      <ShoppingBag className="w-12 h-12 mx-auto mb-2 opacity-20" />
                       <p className="text-sm">Belum ada pesanan masuk</p>
                     </div>
                   ) : (
-                    <>
-                      {/* Desktop Table View */}
-                      <div className="hidden sm:block overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="text-xs sm:text-sm">ID Pesanan</TableHead>
-                              <TableHead className="text-xs sm:text-sm">Pelanggan</TableHead>
-                              <TableHead className="text-xs sm:text-sm">Produk</TableHead>
-                              <TableHead className="text-xs sm:text-sm">Jumlah</TableHead>
-                              <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-sm">
+                              ID Pesanan
+                            </TableHead>
+                            <TableHead className="text-sm">Pelanggan</TableHead>
+                            <TableHead className="text-sm">Produk</TableHead>
+                            <TableHead className="text-sm">Jumlah</TableHead>
+                            <TableHead className="text-sm">Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {recentOrders.map((order) => (
+                            <TableRow key={order.id}>
+                              <TableCell className="text-sm font-medium">
+                                {order.id}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {order.customer}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {order.product}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {order.qty}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant="outline"
+                                  className={`${getOrderStatusColor(
+                                    order.status
+                                  )} text-xs`}
+                                >
+                                  {order.status}
+                                </Badge>
+                              </TableCell>
                             </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {recentOrders.map((order) => (
-                              <TableRow key={order.id}>
-                                <TableCell className="text-xs sm:text-sm font-medium">{order.id}</TableCell>
-                                <TableCell className="text-xs sm:text-sm">{order.customer}</TableCell>
-                                <TableCell className="text-xs sm:text-sm">{order.product}</TableCell>
-                                <TableCell className="text-xs sm:text-sm">{order.qty}</TableCell>
-                                <TableCell>
-                                  <Badge
-                                    variant="outline"
-                                    className={`${getOrderStatusColor(order.status)} text-xs`}
-                                  >
-                                    {order.status}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-
-                      {/* Mobile Card View */}
-                      <div className="sm:hidden space-y-3">
-                        {recentOrders.map((order) => (
-                          <div
-                            key={order.id}
-                            className="p-3 bg-muted/30 rounded-lg border"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs font-semibold text-primary">{order.id}</span>
-                              <Badge
-                                variant="outline"
-                                className={`${getOrderStatusColor(order.status)} text-xs`}
-                              >
-                                {order.status}
-                              </Badge>
-                            </div>
-                            <div className="space-y-1.5">
-                              <div className="flex justify-between">
-                                <span className="text-xs text-muted-foreground">Pelanggan</span>
-                                <span className="text-xs font-medium truncate ml-2 max-w-[150px]">{order.customer}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-xs text-muted-foreground">Produk</span>
-                                <span className="text-xs font-medium truncate ml-2 max-w-[150px]">{order.product}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-xs text-muted-foreground">Jumlah</span>
-                                <span className="text-xs font-medium">{order.qty}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   )}
                 </CardContent>
               </Card>
