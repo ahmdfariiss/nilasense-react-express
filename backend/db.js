@@ -1,5 +1,19 @@
 const { Pool } = require("pg");
-require("dotenv").config();
+
+// Hanya load dotenv di development (file .env lokal)
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
+
+// Debug: log environment variables (hide password)
+console.log("🔧 DB Config:", {
+  hasDbUrl: !!process.env.DATABASE_URL,
+  host: process.env.DB_HOST || "(from DATABASE_URL)",
+  user: process.env.DB_USER || "(from DATABASE_URL)",
+  database: process.env.DB_DATABASE || "(from DATABASE_URL)",
+  port: process.env.DB_PORT || "(from DATABASE_URL)",
+  nodeEnv: process.env.NODE_ENV,
+});
 
 // Konfigurasi database
 const isProduction = process.env.NODE_ENV === "production";
