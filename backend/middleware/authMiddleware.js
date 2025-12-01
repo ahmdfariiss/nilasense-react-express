@@ -23,17 +23,17 @@ const protect = (req, res, next) => {
         role: decoded.role,
         pond_id: decoded.pond_id || null, // For petambak users
       };
-x``
+
       // 5. Lanjutkan ke fungsi controller selanjutnya
       next();
     } catch (error) {
       console.error("Token verification failed:", error);
-      res.status(401).json({ message: "Akses ditolak, token tidak valid" });
+      return res.status(401).json({ message: "Akses ditolak, token tidak valid" });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: "Akses ditolak, tidak ada token" });
+    return res.status(401).json({ message: "Akses ditolak, tidak ada token" });
   }
 };
 
